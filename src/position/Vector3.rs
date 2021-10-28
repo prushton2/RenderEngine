@@ -9,11 +9,32 @@ pub fn new(x: f64, y: f64, z: f64) -> vector3{
 }
 
 impl vector3 {
-    pub fn add(&self, other: vector3) -> vector3 {
+    pub fn add(&self, other: &vector3) -> vector3 {
         vector3{
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z
+        }
+    }
+    pub fn sub(&self, other: &vector3) -> vector3 {
+        vector3{
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z
+        }
+    }
+    pub fn mult(&self, other: &vector3) -> vector3 {
+        vector3{
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z
+        }
+    }
+    pub fn div(&self, other: &vector3) -> vector3 {
+        vector3{
+            x: self.x / other.x,
+            y: self.y / other.y,
+            z: self.z / other.z
         }
     }
 }
