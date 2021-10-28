@@ -13,6 +13,8 @@ fn main() {
         position::Angle::new(90.0),
     );
 
+    let angle2 = position::Angle::new(270.0).add(&position::Angle::new(270.0)); 
+
     let sum = pos1.add(&pos2);
     dbg!(&sum.x);
     dbg!(&sum.y);
@@ -23,5 +25,7 @@ fn main() {
     dbg!(&rot.x.angle);
     dbg!(&rot.y.angle);
     dbg!(&rot.z.angle);
+
+    dbg!(&angle2.angle);
 
 }
