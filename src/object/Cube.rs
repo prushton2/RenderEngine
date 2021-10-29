@@ -11,7 +11,7 @@ pub struct cube {
     pub s6: Square::square,
 }
 
-pub fn new(pos1: Vector3::vector3, pos2: Vector3::vector3) -> cube{    //I hate this but it should work
+pub fn new(pos1: &Vector3::vector3, pos2: &Vector3::vector3) -> cube{    //I hate this but it should work
     cube {
         s1: Square::new( //Front face
             Vector3::new(pos1.x, pos1.y, pos1.z), 
