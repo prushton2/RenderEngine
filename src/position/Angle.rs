@@ -7,6 +7,9 @@ pub fn new(angle: f64) -> angle {
 }
 
 impl angle {
+    pub fn clone(&self) -> angle {
+        angle{angle:self.angle}
+    }
     pub fn add(&self, other: &angle) -> angle {
         angle{
             angle: (self.angle + other.angle) % 360.0
