@@ -1,5 +1,8 @@
 #[allow(non_snake_case)]
 
+mod position;
+mod object;
+
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -8,18 +11,18 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-use position;
-use object;
 
-
-const WIDTH: u32 = 320;
+const WIDTH: u32 = 320; //Resolution
 const HEIGHT: u32 = 240;
-const BOX_SIZE: i16 = 64;
+
+/// Representation of the application state. In this example, a box will bounce around the screen.
+struct World {
+    bg_color: position::Vector3::vector3,
+}
 
 fn main() -> Result<(), Error> {
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
-
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
@@ -35,11 +38,14 @@ fn main() -> Result<(), Error> {
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
+    let mut world = World::new();
+
+    world.paint(&position::Vector3::new(0.0, 0.0, 255.0));
 
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
-            draw(pixels.get_frame(), position::Vector3::new(0.0, 0.0, 0.0));
+            world.draw(pixels.get_frame());
             if pixels
                 .render()
                 .map_err(|e| error!("pixels.render() failed: {}", e))
@@ -63,59 +69,38 @@ fn main() -> Result<(), Error> {
                 pixels.resize_surface(size.width, size.height);
             }
 
+            // Update internal state and request a redraw
             window.request_redraw();
         }
     });
 }
 
-fn draw(frame: &mut [u8], spot: position::vector3) {
+impl World {
+    /// Create a new `World` instance that can draw a moving box.
+    fn new() -> Self {
+        Self {
+            bg_color: position::Vector3::new(0.0, 0.0, 0.0),
+        }
+    }
 
+    /// Update the `World` internal state; bounce the box around the screen.
+    fn paint(&mut self, color: &position::Vector3::vector3) {
+        self.bg_color = color.clone();
+    }
 
+    /// Draw the `World` state to the frame buffer.
+    ///
+    /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
+    fn draw(&self, frame: &mut [u8]) {
+        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+            let r = self.bg_color.x.round() as u8;
+            let g = self.bg_color.y.round() as u8;
+            let b = self.bg_color.z.round() as u8;
+            pixel[0] = r;
+            pixel[1] = g;
+            pixel[2] = b;
 
-    for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-        let x = (i % WIDTH as usize) as i16;
-        let y = (i / WIDTH as usize) as i16;
-
-        let inside_the_box = x >= self.box_x
-            && x < self.box_x + BOX_SIZE
-            && y >= self.box_y
-            && y < self.box_y + BOX_SIZE;
-
-        let rgba = if inside_the_box {
-            [0x5e, 0x48, 0xe8, 0xff]
-        } else {
-            [0x48, 0xb2, 0xe8, 0xff]
-        };
-
-        pixel.copy_from_slice(&rgba);
+            // pixel.copy_from_slice(&rgba);
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// mod position;
-// mod object;
-
-// fn main() {
-
-//     let cube = object::Cube::new(
-//         &position::Vector3::new(0.0, 0.0, 0.0),
-//         &position::Vector3::new(1.0, 1.0, 1.0),
-//     );
-// }
