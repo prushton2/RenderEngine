@@ -10,10 +10,10 @@ use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
+use std::num;
 
-
-const WIDTH: u32 = 480; //Resolution
-const HEIGHT: u32 = 320;
+const WIDTH: u32 = 1280; //Resolution
+const HEIGHT: u32 = 720;
 
 /// Representation of the application state. In this example, a box will bounce around the screen.
 struct Screen {
@@ -70,11 +70,16 @@ fn run() -> Result<(), Error> {
             }
 
             if(input.key_pressed(VirtualKeyCode::Space)) {
-                screen.drawLine(pixels.get_frame(), position::Vector3::new(0.0, 0.0, 0.0), position::Vector3::new(100.0, 50.0, 0.0));
+                let pos1 = position::Vector3::new(100.0, 100.0, 0.0);
+                let pos2 = position::Vector3::new(200.0, 150.0, 0.0);
+                screen.drawLine(pixels.get_frame(), pos1.clone(), pos2.clone());
+                screen.draw(pixels.get_frame(), pos1, position::Vector3::new(255.0, 0.0, 0.0));
+                screen.draw(pixels.get_frame(), pos2, position::Vector3::new(255.0, 0.0, 0.0));
             }
 
             if(input.key_pressed(VirtualKeyCode::LShift)) {
-                screen.draw(pixels.get_frame(), position::Vector3::new(0.0, 100.0, 0.0), position::Vector3::new(255.0, 0.0, 0.0));
+                screen.drawLine(pixels.get_frame(), position::Vector3::new(100.0, 50.0, 0.0), position::Vector3::new(69.0, 72.0, 0.0));
+
             }
 
 
@@ -111,10 +116,11 @@ impl Screen {
     fn drawLine(&mut self, frame: &mut [u8], pos1: position::Vector3::vector3, pos2: position::Vector3::vector3) {
         let x_diff = pos2.x - pos1.x;
         let y_diff = pos2.y - pos1.y;
-        for i in 0..(y_diff+1.0) as u64 {
-            for j in 0..(x_diff/y_diff+1.0) as u64 {
-                self.draw(frame, position::Vector3::new(i as f64, (j+i) as f64, 0.0), position::Vector3::new(0.0, 0.0, 255.0));
-            }          
+
+        let slope = y_diff/x_diff;
+
+        for i in 0..x_diff as i64 {
+            self.draw(frame, position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), position::Vector3::new(0.0, 0.0, 0.0));
         }
 
     }
