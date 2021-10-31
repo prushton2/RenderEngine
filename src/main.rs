@@ -72,13 +72,13 @@ fn run() -> Result<(), Error> {
             if(input.key_pressed(VirtualKeyCode::Space)) {
                 let pos1 = position::Vector3::new(100.0, 100.0, 0.0);
                 let pos2 = position::Vector3::new(200.0, 150.0, 0.0);
-                screen.drawLine(pixels.get_frame(), pos1.clone(), pos2.clone());
-                screen.draw(pixels.get_frame(), pos1, position::Vector3::new(255.0, 0.0, 0.0));
-                screen.draw(pixels.get_frame(), pos2, position::Vector3::new(255.0, 0.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &pos1, &pos2);
+                screen.draw(pixels.get_frame(), &pos1, &position::Vector3::new(255.0, 0.0, 0.0));
+                screen.draw(pixels.get_frame(), &pos2, &position::Vector3::new(255.0, 0.0, 0.0));
             }
 
             if(input.key_pressed(VirtualKeyCode::LShift)) {
-                screen.drawLine(pixels.get_frame(), position::Vector3::new(100.0, 50.0, 0.0), position::Vector3::new(69.0, 72.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 50.0, 0.0), &position::Vector3::new(69.0, 72.0, 0.0));
 
             }
 
@@ -113,14 +113,14 @@ impl Screen {
         
     }
 
-    fn drawLine(&mut self, frame: &mut [u8], pos1: position::Vector3::vector3, pos2: position::Vector3::vector3) {
+    fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
         let x_diff = pos2.x - pos1.x;
         let y_diff = pos2.y - pos1.y;
 
         let slope = y_diff/x_diff;
 
         for i in 0..x_diff as i64 {
-            self.draw(frame, position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), position::Vector3::new(0.0, 0.0, 0.0));
+            self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
         }
 
     }
@@ -128,7 +128,7 @@ impl Screen {
     /// Draw the `World` state to the frame buffer.
     ///
     /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
-    fn draw(&self, frame: &mut [u8], pos: position::Vector3::vector3, color: position::Vector3::vector3) {
+    fn draw(&self, frame: &mut [u8], pos: &position::Vector3::vector3, color: &position::Vector3::vector3) {
         
         let index: usize = (pos.y as u32 * WIDTH as u32 + pos.x as u32) as usize;
 
