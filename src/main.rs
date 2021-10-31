@@ -1,4 +1,4 @@
-#[allow(non_snake_case)]
+#![allow(non_snake_case)]
 
 mod position;
 mod object;
@@ -114,6 +114,7 @@ impl Screen {
         println!("{}, {}", x_diff, y_diff);
         for i in 0..(y_diff+1.0) as u64 {
             for j in 0..(x_diff/y_diff+1.0) as u64 {
+                println!("drawing");
                 self.draw(frame, position::Vector3::new(i as f64, (j+i) as f64, 0.0), position::Vector3::new(0.0, 0.0, 255.0));
             }          
         }
@@ -127,13 +128,10 @@ impl Screen {
         
         let index: usize = (pos.y as u32 * WIDTH as u32 + pos.x as u32) as usize;
 
-        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-            if(i == index) {
-                pixel[0] = color.x.round() as u8;
-                pixel[1] = color.y.round() as u8;
-                pixel[2] = color.z.round() as u8;
-            }
-        }
+        frame[index*4+0] = color.x.round() as u8;
+        frame[index*4+1] = color.y.round() as u8;
+        frame[index*4+2] = color.z.round() as u8;
+        frame[index*4+3] = 0u8
     }
 
     fn set_bg_color(&self, frame: &mut [u8], color: position::Vector3::vector3) {
