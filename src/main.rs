@@ -21,8 +21,6 @@ struct Screen {
 }
 
 fn main() {
-    // let mut res = [[[3u8; 3]; WIDTH as usize]; HEIGHT as usize];
-    // res[0][0][0] = 128u8;
     run();
 }
 
@@ -47,12 +45,12 @@ fn run() -> Result<(), Error> {
     };
     let mut screen = Screen::new();
 
-    screen.bg_color = position::Vector3::new(255.0, 255.0, 255.0);
+    screen.set_bg_color(pixels.get_frame(), position::Vector3::new(255.0, 255.0, 255.0));
 
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
-            screen.draw(pixels.get_frame());
+            // screen.draw(pixels.get_frame());
             if pixels
                 .render()
                 .map_err(|e| error!("pixels.render() failed: {}", e))
@@ -72,13 +70,11 @@ fn run() -> Result<(), Error> {
             }
 
             if(input.key_pressed(VirtualKeyCode::Space)) {
-                screen.bg_color = position::Vector3::new(0.0, 0.0, 1.0).add(&screen.bg_color);
-                dbg!(&screen.bg_color.z);
+                screen.drawLine(pixels.get_frame(), position::Vector3::new(0.0, 0.0, 0.0), position::Vector3::new(100.0, 50.0, 0.0));
             }
 
             if(input.key_pressed(VirtualKeyCode::LShift)) {
-                screen.bg_color = position::Vector3::new(0.0, 0.0, -1.0).add(&screen.bg_color);
-                dbg!(&screen.bg_color.z);
+                screen.draw(pixels.get_frame(), position::Vector3::new(0.0, 100.0, 0.0), position::Vector3::new(255.0, 0.0, 0.0));
             }
 
 
@@ -108,24 +104,43 @@ impl Screen {
         }
     }
 
-    fn paint(&mut self, pos: position::Vector3::vector3, color: position::Vector3::vector3) {
+    fn render(&mut self, pos: position::Vector3::vector3, color: position::Vector3::vector3) {
         
+    }
+
+    fn drawLine(&mut self, frame: &mut [u8], pos1: position::Vector3::vector3, pos2: position::Vector3::vector3) {
+        let x_diff = pos2.x - pos1.x;
+        let y_diff = pos2.y - pos1.y;
+        println!("{}, {}", x_diff, y_diff);
+        for i in 0..(y_diff+1.0) as u64 {
+            for j in 0..(x_diff/y_diff+1.0) as u64 {
+                self.draw(frame, position::Vector3::new(i as f64, (j+i) as f64, 0.0), position::Vector3::new(0.0, 0.0, 255.0));
+            }          
+        }
+
     }
 
     /// Draw the `World` state to the frame buffer.
     ///
     /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
-    fn draw(&self, frame: &mut [u8]) {
-        let mut prevHighest = 0;
+    fn draw(&self, frame: &mut [u8], pos: position::Vector3::vector3, color: position::Vector3::vector3) {
+        
+        let index: usize = (pos.y as u32 * WIDTH as u32 + pos.x as u32) as usize;
+
         for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-            pixel[0] = self.bg_color.x.round() as u8;
-            pixel[1] = self.bg_color.y.round() as u8;
-            pixel[2] = self.bg_color.z.round() as u8;
-            
-            let x = (i % WIDTH as usize) as i16;
-            let y = (i / WIDTH as usize) as i16;
+            if(i == index) {
+                pixel[0] = color.x.round() as u8;
+                pixel[1] = color.y.round() as u8;
+                pixel[2] = color.z.round() as u8;
+            }
+        }
+    }
 
-
+    fn set_bg_color(&self, frame: &mut [u8], color: position::Vector3::vector3) {
+        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+            pixel[0] = color.x.round() as u8;
+            pixel[1] = color.y.round() as u8;
+            pixel[2] = color.z.round() as u8;
         }
     }
 }
