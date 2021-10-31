@@ -129,7 +129,7 @@ impl Screen {
         frame[index*4+0] = color.x.round() as u8;
         frame[index*4+1] = color.y.round() as u8;
         frame[index*4+2] = color.z.round() as u8;
-        frame[index*4+3] = 0u8
+        frame[index*4+3] = 0u8;
     }
 
     fn set_bg_color(&self, frame: &mut [u8], color: position::Vector3::vector3) {
