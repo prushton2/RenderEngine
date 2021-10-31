@@ -69,19 +69,21 @@ fn run() -> Result<(), Error> {
                 return;
             }
 
-            if(input.key_pressed(VirtualKeyCode::Space)) {
-                let pos1 = position::Vector3::new(100.0, 100.0, 0.0);
-                let pos2 = position::Vector3::new(200.0, 150.0, 0.0);
+            if(input.key_pressed(VirtualKeyCode::F2)) {
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(100.0, 200.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(200.0, 100.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 200.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(200.0, 100.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
+
+            }
+
+            if(input.key_pressed(VirtualKeyCode::F3)) {
+                let pos1 = position::Vector3::new(120.0, 100.0, 0.0);
+                let pos2 = position::Vector3::new(120.0, 150.0, 0.0);
                 screen.drawLine(pixels.get_frame(), &pos1, &pos2);
                 screen.draw(pixels.get_frame(), &pos1, &position::Vector3::new(255.0, 0.0, 0.0));
                 screen.draw(pixels.get_frame(), &pos2, &position::Vector3::new(255.0, 0.0, 0.0));
             }
-
-            if(input.key_pressed(VirtualKeyCode::LShift)) {
-                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 50.0, 0.0), &position::Vector3::new(69.0, 72.0, 0.0));
-
-            }
-
 
             // Resize the window
             if let Some(size) = input.window_resized() {
@@ -113,11 +115,21 @@ impl Screen {
         
     }
 
+    fn boundaryFill(&mut self, frame: &mut [u8], start: &position::Vector3::vector3) {
+        
+    }
+
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
         let x_diff = pos2.x - pos1.x;
         let y_diff = pos2.y - pos1.y;
 
         let slope = y_diff/x_diff;
+
+        if x_diff == 0.0 {
+            for i in 0..y_diff as i64 {
+                self.draw(frame, &position::Vector3::new(pos1.x, pos1.y + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+            }
+        }
 
         for i in 0..x_diff as i64 {
             self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
