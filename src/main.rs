@@ -111,10 +111,8 @@ impl Screen {
     fn drawLine(&mut self, frame: &mut [u8], pos1: position::Vector3::vector3, pos2: position::Vector3::vector3) {
         let x_diff = pos2.x - pos1.x;
         let y_diff = pos2.y - pos1.y;
-        println!("{}, {}", x_diff, y_diff);
         for i in 0..(y_diff+1.0) as u64 {
             for j in 0..(x_diff/y_diff+1.0) as u64 {
-                println!("drawing");
                 self.draw(frame, position::Vector3::new(i as f64, (j+i) as f64, 0.0), position::Vector3::new(0.0, 0.0, 255.0));
             }          
         }
