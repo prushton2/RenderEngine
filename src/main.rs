@@ -12,6 +12,7 @@ use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
+use std::cmp;
 
 const WIDTH: u32 = 1280; //Resolution
 const HEIGHT: u32 = 720;
@@ -83,15 +84,15 @@ fn run() -> Result<(), Error> {
             }
 
             if input.key_pressed(VirtualKeyCode::F2) {
-                let pos1 = position::Vector3::new(420.0, 110.0, 0.0);
-                let pos2 = position::Vector3::new(450.0, 160.0, 0.0);
-                screen.drawLine(pixels.get_frame(), &pos1, &pos2);
-                screen.draw(pixels.get_frame(), &pos1, &position::Vector3::new(255.0, 0.0, 0.0));
-                screen.draw(pixels.get_frame(), &pos2, &position::Vector3::new(255.0, 0.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(50.0, 50.0, 0.0), &position::Vector3::new(50.0, 250.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(50.0, 50.0, 0.0), &position::Vector3::new(250.0, 50.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(50.0, 250.0, 0.0), &position::Vector3::new(250.0, 250.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(250.0, 50.0, 0.0), &position::Vector3::new(250.0, 250.0, 0.0));
+
             }
 
             if input.key_pressed(VirtualKeyCode::F3) {
-                screen.boundaryFill4(pixels.get_frame(), &position::Vector3::new(101.0, 101.0, 0.0));
+                screen.boundaryFill4(pixels.get_frame(), &position::Vector3::new(150.0, 150.0, 0.0));
             }
 
             // Resize the window
@@ -170,6 +171,9 @@ impl Screen {
 
         for i in 0..x_diff as i64 {
             self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+            for j in cmp::min(0, slope as i64)..cmp::max(0, slope as i64) as i64 {
+                self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + j as f64 + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+            }
         }
 
     }
