@@ -69,7 +69,7 @@ fn run() -> Result<(), Error> {
                 return;
             }
 
-            if(input.key_pressed(VirtualKeyCode::F2)) {
+            if(input.key_pressed(VirtualKeyCode::F1)) {
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(100.0, 200.0, 0.0));
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(200.0, 100.0, 0.0));
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 200.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
@@ -77,12 +77,16 @@ fn run() -> Result<(), Error> {
 
             }
 
-            if(input.key_pressed(VirtualKeyCode::F3)) {
-                let pos1 = position::Vector3::new(120.0, 100.0, 0.0);
-                let pos2 = position::Vector3::new(120.0, 150.0, 0.0);
+            if(input.key_pressed(VirtualKeyCode::F2)) {
+                let pos1 = position::Vector3::new(420.0, 110.0, 0.0);
+                let pos2 = position::Vector3::new(450.0, 160.0, 0.0);
                 screen.drawLine(pixels.get_frame(), &pos1, &pos2);
                 screen.draw(pixels.get_frame(), &pos1, &position::Vector3::new(255.0, 0.0, 0.0));
                 screen.draw(pixels.get_frame(), &pos2, &position::Vector3::new(255.0, 0.0, 0.0));
+            }
+
+            if(input.key_pressed(VirtualKeyCode::F3)) {
+                screen.boundaryFill4(pixels.get_frame(), &position::Vector3::new(101.0, 101.0, 0.0));
             }
 
             // Resize the window
@@ -115,8 +119,16 @@ impl Screen {
         
     }
 
-    fn boundaryFill(&mut self, frame: &mut [u8], start: &position::Vector3::vector3) {
-        
+    fn boundaryFill4(&mut self, frame: &mut [u8], start: &position::Vector3::vector3) {
+        let index: usize = (start.y as u32 * WIDTH as u32 + start.x as u32) as usize;
+        let currentPixel = position::Vector3::new(frame[index*4+0] as f64, frame[index*4+1] as f64, frame[index*4+2] as f64);
+        if !currentPixel.eq(&position::Vector3::new(0.0, 0.0, 0.0)) {
+            self.draw(frame, &start, &position::Vector3::new(0.0, 0.0, 0.0));
+            self.boundaryFill4(frame, &start.add(&position::Vector3::new(1.0, 0.0, 0.0)));
+            self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, 1.0, 0.0)));
+            // self.boundaryFill4(frame, &start.add(&position::Vector3::new(-1.0, 0.0, 0.0)));
+            // self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, -1.0, 0.0)));
+        }
     }
 
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
