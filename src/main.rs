@@ -142,18 +142,6 @@ impl Screen {
                 stack.pop();
             }
         }
-
-
-
-
-        let currentPixel = self.getPixelColor(frame, &start);
-        if !currentPixel.eq(&position::Vector3::new(0.0, 0.0, 0.0)) {
-            self.draw(frame, &start, &position::Vector3::new(0.0, 0.0, 0.0));
-            self.boundaryFill4(frame, &start.add(&position::Vector3::new(1.0, 0.0, 0.0)));
-            self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, 1.0, 0.0)));
-            self.boundaryFill4(frame, &start.add(&position::Vector3::new(-1.0, 0.0, 0.0)));
-            self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, -1.0, 0.0)));
-        }
     }
 
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
