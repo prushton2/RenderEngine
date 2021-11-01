@@ -40,4 +40,7 @@ impl vector3 {
             z: self.z / other.z
         }
     }
+    pub fn eq(&self, other: &vector3) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
 }
