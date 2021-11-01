@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(non_camel_case_types)]
 
 mod position;
 mod object;
@@ -10,7 +12,6 @@ use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
-use std::num;
 
 const WIDTH: u32 = 1280; //Resolution
 const HEIGHT: u32 = 720;
@@ -69,7 +70,7 @@ fn run() -> Result<(), Error> {
                 return;
             }
 
-            if(input.key_pressed(VirtualKeyCode::F1)) {
+            if input.key_pressed(VirtualKeyCode::F1) {
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(100.0, 200.0, 0.0));
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(200.0, 100.0, 0.0));
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 200.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
@@ -77,7 +78,7 @@ fn run() -> Result<(), Error> {
 
             }
 
-            if(input.key_pressed(VirtualKeyCode::F2)) {
+            if input.key_pressed(VirtualKeyCode::F2) {
                 let pos1 = position::Vector3::new(420.0, 110.0, 0.0);
                 let pos2 = position::Vector3::new(450.0, 160.0, 0.0);
                 screen.drawLine(pixels.get_frame(), &pos1, &pos2);
@@ -85,7 +86,7 @@ fn run() -> Result<(), Error> {
                 screen.draw(pixels.get_frame(), &pos2, &position::Vector3::new(255.0, 0.0, 0.0));
             }
 
-            if(input.key_pressed(VirtualKeyCode::F3)) {
+            if input.key_pressed(VirtualKeyCode::F3) {
                 screen.boundaryFill4(pixels.get_frame(), &position::Vector3::new(101.0, 101.0, 0.0));
             }
 
@@ -119,15 +120,39 @@ impl Screen {
         
     }
 
+    fn getPixelColor(&mut self, frame:&mut [u8], pos: &position::Vector3::vector3) -> position::Vector3::vector3 {
+        let index: usize = (pos.y as u32 * WIDTH as u32 + pos.x as u32) as usize;
+        position::Vector3::new(frame[index*4+0] as f64, frame[index*4+1] as f64, frame[index*4+2] as f64)
+    }
+
     fn boundaryFill4(&mut self, frame: &mut [u8], start: &position::Vector3::vector3) {
-        let index: usize = (start.y as u32 * WIDTH as u32 + start.x as u32) as usize;
-        let currentPixel = position::Vector3::new(frame[index*4+0] as f64, frame[index*4+1] as f64, frame[index*4+2] as f64);
+        let mut stack = Vec::new();
+        stack.push(start.clone());
+
+        while stack.len() > 0 {
+            let currentPos = stack[stack.len()-1].clone();
+            let currentPixel = self.getPixelColor(frame, &currentPos);
+            if !currentPixel.eq(&position::Vector3::new(0.0, 0.0, 0.0)) {
+                self.draw(frame, &currentPos, &position::Vector3::new(0.0, 0.0, 0.0));
+                stack.push(position::Vector3::new(currentPos.x + 1.0,  currentPos.y + 0.0,  currentPos.z));
+                stack.push(position::Vector3::new(currentPos.x + 0.0,  currentPos.y + 1.0,  currentPos.z));
+                stack.push(position::Vector3::new(currentPos.x + -1.0, currentPos.y + 0.0,  currentPos.z));
+                stack.push(position::Vector3::new(currentPos.x + 0.0,  currentPos.y + -1.0, currentPos.z));
+            } else {
+                stack.pop();
+            }
+        }
+
+
+
+
+        let currentPixel = self.getPixelColor(frame, &start);
         if !currentPixel.eq(&position::Vector3::new(0.0, 0.0, 0.0)) {
             self.draw(frame, &start, &position::Vector3::new(0.0, 0.0, 0.0));
             self.boundaryFill4(frame, &start.add(&position::Vector3::new(1.0, 0.0, 0.0)));
             self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, 1.0, 0.0)));
-            // self.boundaryFill4(frame, &start.add(&position::Vector3::new(-1.0, 0.0, 0.0)));
-            // self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, -1.0, 0.0)));
+            self.boundaryFill4(frame, &start.add(&position::Vector3::new(-1.0, 0.0, 0.0)));
+            self.boundaryFill4(frame, &start.add(&position::Vector3::new(0.0, -1.0, 0.0)));
         }
     }
 
@@ -137,7 +162,7 @@ impl Screen {
 
         let slope = y_diff/x_diff;
 
-        if x_diff == 0.0 {
+        if x_diff == 0.0 {// this needs to be improved
             for i in 0..y_diff as i64 {
                 self.draw(frame, &position::Vector3::new(pos1.x, pos1.y + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
             }
