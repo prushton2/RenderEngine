@@ -4,6 +4,7 @@
 
 mod position;
 mod object;
+mod math;
 
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -152,7 +153,7 @@ impl Screen {
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
         let mut pos1 = pos1;
         let mut pos2 = pos2;
-        if(pos1.x > pos2.x) {
+        if pos1.x > pos2.x {
             let pos3 = pos2;
             pos2 = pos1;
             pos1 = pos3;
