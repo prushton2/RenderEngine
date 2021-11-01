@@ -70,11 +70,15 @@ fn run() -> Result<(), Error> {
                 return;
             }
 
+            if input.key_pressed(VirtualKeyCode::R) {
+                screen.set_bg_color(pixels.get_frame(), position::Vector3::new(255.0, 255.0, 255.0));
+            }
+
             if input.key_pressed(VirtualKeyCode::F1) {
-                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(100.0, 200.0, 0.0));
-                screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 100.0, 0.0), &position::Vector3::new(200.0, 100.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(120.0, 100.0, 0.0), &position::Vector3::new(100.0, 200.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(120.0, 100.0, 0.0), &position::Vector3::new(220.0, 100.0, 0.0));
                 screen.drawLine(pixels.get_frame(), &position::Vector3::new(100.0, 200.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
-                screen.drawLine(pixels.get_frame(), &position::Vector3::new(200.0, 100.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(220.0, 100.0, 0.0), &position::Vector3::new(200.0, 200.0, 0.0));
 
             }
 
@@ -145,6 +149,14 @@ impl Screen {
     }
 
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
+        let mut pos1 = pos1;
+        let mut pos2 = pos2;
+        if(pos1.x > pos2.x) {
+            let pos3 = pos2;
+            pos2 = pos1;
+            pos1 = pos3;
+        }
+
         let x_diff = pos2.x - pos1.x;
         let y_diff = pos2.y - pos1.y;
 
