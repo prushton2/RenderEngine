@@ -24,7 +24,13 @@ struct Screen {
 }
 
 fn main() {
-    run();
+    let camera = object::Camera::new(
+        position::Vector3::new(0.0, 0.0, 0.0),
+        position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
+        position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
+    );
+    math::getAnglesToPoint(&camera, &position::Vector3::new(3.0, 0.0, 2.0));
+    // run();
 }
 
 
