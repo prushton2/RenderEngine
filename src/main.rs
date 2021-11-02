@@ -15,13 +15,17 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 use std::cmp;
 
-const WIDTH: u32 = 1280; //Resolution
-const HEIGHT: u32 = 720;
+const WIDTH: u32 = 720; //Resolution
+const HEIGHT: u32 = 350;
+
 
 /// Representation of the application state. In this example, a box will bounce around the screen.
 struct Screen {
     bg_color: position::Vector3::vector3,
     triangles: Vec<object::Triangle::triangle>,
+    camera: object::Camera::camera,
+    scalar: position::Vector3::vector3,
+    // emptyScreen: [u8; (WIDTH*HEIGHT) as usize],
 }
 
 
@@ -32,11 +36,17 @@ fn main() {
 }
 
 fn createObjects() -> Vec<object::Triangle::triangle> {
-    let cube1 = object::Cube::new(&position::Vector3::new(-1.0, 1.0, 1.0), &position::Vector3::new(1.0, 3.0, 3.0));
+    // let cube1 = object::Cube::new(&position::Vector3::new(-1.0, 1.0, 1.0), &position::Vector3::new(1.0, 3.0, 3.0));
     let mut returnVec = Vec::new();
-    for i in cube1.getTriangles() {
-        returnVec.push(i.clone());
-    }
+    returnVec.push(object::Triangle::new(
+        position::Vector3::new(1.0, 1.0, 1.0), 
+        position::Vector3::new(1.0, 2.0, 1.0), 
+        position::Vector3::new(2.0, 1.0, 1.0)
+        )
+    );
+    // for i in cube1.getTriangles() {
+    //     returnVec.push(i.clone());
+    // }
     returnVec
 }
 
@@ -87,6 +97,10 @@ fn run(triangles: Vec<object::Triangle::triangle>) -> Result<(), Error> {
                 return;
             }
 
+            if input.key_pressed(VirtualKeyCode::W) {
+                screen.render(pixels.get_frame());
+            }
+
             if input.key_pressed(VirtualKeyCode::R) {
                 screen.set_bg_color(pixels.get_frame(), position::Vector3::new(255.0, 255.0, 255.0));
             }
@@ -135,11 +149,46 @@ impl Screen {
         Self {
             bg_color: position::Vector3::new(0.0, 0.0, 0.0),
             triangles: Vec::new(),
+            camera: object::Camera::new(
+                    position::Vector3::new(0.0, 0.0, 0.0),
+                    position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
+                    position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
+                ),
+            scalar: position::Vector3::new(1.0, 1.0, 1.0),
+            // emptyScreen: [0u8; (WIDTH*HEIGHT) as usize],
         }
     }
 
-    fn render(&mut self, pos: position::Vector3::vector3, color: position::Vector3::vector3) {
-        
+    fn render(&mut self, frame: &mut [u8]) {
+        for i in 0..self.triangles.len() {
+
+            let i = &self.triangles[i];
+            
+            let angle1 = math::getAnglesToPoint(&self.camera, &i.pos1.clone());
+            let angle2 = math::getAnglesToPoint(&self.camera, &i.pos2.clone());
+            let angle3 = math::getAnglesToPoint(&self.camera, &i.pos3.clone());
+            
+            let pos1 = self.angleToPixel(angle1);
+            let pos2 = self.angleToPixel(angle2);
+            let pos3 = self.angleToPixel(angle3);
+            
+            self.drawLine(frame, &pos1.mult(&self.scalar), &pos2.mult(&self.scalar));
+            self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
+            self.drawLine(frame, &pos3.mult(&self.scalar), &pos1.mult(&self.scalar));
+
+            
+        }
+    }
+
+    fn angleToPixel(&mut self, angle: position::Rotation::rotation) -> position::Vector3::vector3 {
+        const MID: u32 = WIDTH/2;
+
+        let mut newPos = position::Vector3::new(0.0, 0.0, 0.0);
+
+        newPos.x = angle.x.angle as f64 + MID as f64;
+        newPos.y = HEIGHT as f64 - angle.y.angle;
+
+        newPos
     }
 
     fn getPixelColor(&mut self, frame:&mut [u8], pos: &position::Vector3::vector3) -> position::Vector3::vector3 {
