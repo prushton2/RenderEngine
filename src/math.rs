@@ -1,7 +1,6 @@
 use crate::position;
 use crate::object;
 use std::error;
-// use libm;
 
 pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vector3::vector3) -> position::Rotation::rotation {
     

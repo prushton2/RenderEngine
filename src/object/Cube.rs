@@ -53,11 +53,11 @@ pub fn new(pos1: &Vector3::vector3, pos2: &Vector3::vector3) -> cube {    //I ha
 }
 
 impl cube {
-    pub fn getTriangles(&self) -> [Triangle::triangle; 12] {
-        let mut returnArray: [Triangle::triangle; 12] = [Triangle::triangle{pos1: Vector3::new(0.0, 0.0, 0.0), pos2: Vector3::new(0.0, 0.0, 0.0), pos3: Vector3::new(0.0, 0.0, 0.0)}; 12];
+    pub fn getTriangles(&self) -> Vec<Triangle::triangle> {
+        let mut returnArray = Vec::new(); //[Triangle::triangle; 12] = [Triangle::triangle{pos1: Vector3::new(0.0, 0.0, 0.0), pos2: Vector3::new(0.0, 0.0, 0.0), pos3: Vector3::new(0.0, 0.0, 0.0)}; 12];
         for i in 0..6 {
-            returnArray[i*2+0] = self.squares[i].t1.clone();
-            returnArray[i*2+1] = self.squares[i].t2.clone();
+            returnArray.push(self.squares[i].t1.clone());
+            returnArray.push(self.squares[i].t2.clone());
         }
         returnArray
     }

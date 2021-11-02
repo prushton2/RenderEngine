@@ -27,21 +27,20 @@ struct Screen {
 
 
 fn main() {
-    // let camera = object::Camera::new(
-    //     position::Vector3::new(0.0, 0.0, 0.0),
-    //     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
-    //     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
-    // );
-    // let rot = math::getAnglesToPoint(&camera, &position::Vector3::new(0.0, 1.0, 0.0));
 
-    // dbg!(&rot.x.angle);
-    // dbg!(&rot.y.angle);
-
-    run();
+    run(createObjects());
 }
 
+fn createObjects() -> Vec<object::Triangle::triangle> {
+    let cube1 = object::Cube::new(&position::Vector3::new(-1.0, 1.0, 1.0), &position::Vector3::new(1.0, 3.0, 3.0));
+    let mut returnVec = Vec::new();
+    for i in cube1.getTriangles() {
+        returnVec.push(i.clone());
+    }
+    returnVec
+}
 
-fn run() -> Result<(), Error> {
+fn run(triangles: Vec<object::Triangle::triangle>) -> Result<(), Error> {
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
     let window = {
@@ -59,7 +58,10 @@ fn run() -> Result<(), Error> {
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
+
     let mut screen = Screen::new();
+
+    screen.triangles = triangles;
 
     screen.set_bg_color(pixels.get_frame(), position::Vector3::new(255.0, 255.0, 255.0));
 
