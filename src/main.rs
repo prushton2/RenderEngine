@@ -36,17 +36,17 @@ fn main() {
 }
 
 fn createObjects() -> Vec<object::Triangle::triangle> {
-    // let cube1 = object::Cube::new(&position::Vector3::new(-1.0, 1.0, 1.0), &position::Vector3::new(1.0, 3.0, 3.0));
+    let cube1 = object::Cube::new(&position::Vector3::new(-1.0, 1.0, 1.0), &position::Vector3::new(1.0, 3.0, 3.0));
     let mut returnVec = Vec::new();
-    returnVec.push(object::Triangle::new(
-        position::Vector3::new(1.0, 1.0, 1.0), 
-        position::Vector3::new(1.0, 2.0, 1.0), 
-        position::Vector3::new(2.0, 1.0, 1.0)
-        )
-    );
-    // for i in cube1.getTriangles() {
-    //     returnVec.push(i.clone());
-    // }
+    // returnVec.push(object::Triangle::new(
+    //     position::Vector3::new(1.0, 1.0, 1.0), 
+    //     position::Vector3::new(1.0, 2.0, 1.0), 
+    //     position::Vector3::new(2.0, 1.0, 1.0)
+    //     )
+    // );
+    for i in cube1.getTriangles() {
+        returnVec.push(i.clone());
+    }
     returnVec
 }
 
@@ -180,6 +180,9 @@ impl Screen {
             self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
             self.drawLine(frame, &pos3.mult(&self.scalar), &pos1.mult(&self.scalar));
 
+            let center = ((pos1.add(&pos2)).add(&pos3)).div(&position::Vector3::new(3.0, 3.0, 3.0));
+
+            self.boundaryFill4(frame, &center);
             
         }
     }
@@ -191,7 +194,8 @@ impl Screen {
 
         newPos.x = angle.x.angle as f64 + MID as f64;
         newPos.y = HEIGHT as f64 - angle.y.angle;
-
+        newPos.x = newPos.x.ceil();
+        newPos.y = newPos.y.ceil();
         newPos
     }
 
@@ -235,8 +239,8 @@ impl Screen {
 
         if x_diff == 0.0 {// this needs to be improved
             for i in cmp::min(0, y_diff as i64)..cmp::max(0, y_diff as i64) as i64 {
-                let lowery = cmp::max(pos1.y as i64, pos2.y as i64);
-                self.draw(frame, &position::Vector3::new(pos1.x, lowery as f64 + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+                let highery = cmp::max(pos1.y as i64, pos2.y as i64);
+                self.draw(frame, &position::Vector3::new(pos1.x, highery as f64 + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
             }
         }
 
