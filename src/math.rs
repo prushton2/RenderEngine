@@ -5,7 +5,7 @@ use std::error;
 
 pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vector3::vector3) -> position::Rotation::rotation {
     
-    let rotation = position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0));
+    let mut rotation = position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0));
     
     let a = 1.0;
     let b = getDistance(&position::Vector3::new(camera.pos.x, 0.0, camera.pos.z), &position::Vector3::new(point.x, 0.0, point.z));
@@ -15,13 +15,22 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
 
     xzangle = radToDegrees( ((a + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b)).acos() );
 
-    dbg!(&xzangle);
+    xzangle = if xzangle.is_nan() { 0.0 } else { xzangle };
 
     let a = 1.0;
-    let b = getDistance(&position::Vector3::new(camera.pos.x, 0.0, camera.pos.z), &position::Vector3::new(point.x, 0.0, point.z));
-    let c = getDistance(&position::Vector3::new(point.x, 0.0, point.z), &position::Vector3::new(camera.pos.x, 0.0, camera.pos.z + 1.0));
+    let b = getDistance(&position::Vector3::new(0.0, camera.pos.y, camera.pos.z), &position::Vector3::new(0.0, point.y, point.z));
+    let c = getDistance(&position::Vector3::new(0.0, point.y, point.z), &position::Vector3::new(0.0, camera.pos.y, camera.pos.z + 1.0));
+
+    let mut yzangle;
+
+    yzangle = radToDegrees( ((a + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b)).acos() );
+
+    yzangle = if yzangle.is_nan() { 0.0 } else { yzangle };
 
 
+    rotation.x = position::Angle::new(xzangle);
+    rotation.y = position::Angle::new(yzangle);
+    
     rotation
 }
 

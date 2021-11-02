@@ -29,7 +29,11 @@ fn main() {
         position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
         position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
     );
-    math::getAnglesToPoint(&camera, &position::Vector3::new(3.0, 0.0, 2.0));
+    let rot = math::getAnglesToPoint(&camera, &position::Vector3::new(0.0, 1.0, 0.0));
+
+    dbg!(&rot.x.angle);
+    dbg!(&rot.y.angle);
+
     // run();
 }
 
