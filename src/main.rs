@@ -172,6 +172,10 @@ impl Screen {
             let pos2 = self.angleToPixel(angle2);
             let pos3 = self.angleToPixel(angle3);
             
+            println!("{}, {}, {}", pos1.x, pos1.y, pos1.z);
+            println!("{}, {}, {}", pos2.x, pos2.y, pos2.z);
+            println!("{}, {}, {}", pos3.x, pos3.y, pos3.z);
+
             self.drawLine(frame, &pos1.mult(&self.scalar), &pos2.mult(&self.scalar));
             self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
             self.drawLine(frame, &pos3.mult(&self.scalar), &pos1.mult(&self.scalar));
@@ -230,8 +234,9 @@ impl Screen {
         let slope = y_diff/x_diff;
 
         if x_diff == 0.0 {// this needs to be improved
-            for i in 0..y_diff as i64 {
-                self.draw(frame, &position::Vector3::new(pos1.x, pos1.y + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+            for i in cmp::min(0, y_diff as i64)..cmp::max(0, y_diff as i64) as i64 {
+                let lowery = cmp::max(pos1.y as i64, pos2.y as i64);
+                self.draw(frame, &position::Vector3::new(pos1.x, lowery as f64 + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
             }
         }
 
