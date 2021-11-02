@@ -15,8 +15,10 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 use std::cmp;
 
-const WIDTH: u32 = 720; //Resolution
-const HEIGHT: u32 = 350;
+use bresenham::Bresenham;
+
+const WIDTH: u32 = 600; //Resolution
+const HEIGHT: u32 = 400;
 
 
 /// Representation of the application state. In this example, a box will bounce around the screen.
@@ -125,6 +127,14 @@ fn run(triangles: Vec<object::Triangle::triangle>) -> Result<(), Error> {
                 screen.boundaryFill4(pixels.get_frame(), &position::Vector3::new(150.0, 150.0, 0.0));
             }
 
+            if input.key_pressed(VirtualKeyCode::F4) {
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 - 1.0, 0.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(WIDTH as f64 - 1.0, HEIGHT as f64 - 1.0, 0.0), &position::Vector3::new(WIDTH as f64 - 1.0, 0.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(WIDTH as f64 - 1.0, HEIGHT as f64 - 1.0, 0.0), &position::Vector3::new(0.0, HEIGHT as f64 - 1.0, 0.0));
+                screen.drawLine(pixels.get_frame(), &position::Vector3::new(0.0, HEIGHT as f64 - 1.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
+            
+            }
+
             // Resize the window
             if let Some(size) = input.window_resized() {
                 pixels.resize_surface(size.width, size.height);
@@ -180,9 +190,13 @@ impl Screen {
             self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
             self.drawLine(frame, &pos3.mult(&self.scalar), &pos1.mult(&self.scalar));
 
-            let center = ((pos1.add(&pos2)).add(&pos3)).div(&position::Vector3::new(3.0, 3.0, 3.0));
+            // let center = ((pos1.add(&pos2)).add(&pos3)).div(&position::Vector3::new(3.0, 3.0, 3.0));
 
-            self.boundaryFill4(frame, &center);
+            let mut center = pos1.add(&pos2);
+            center = center.add(&pos3);
+            center = center.div(&position::Vector3::new(3.0, 3.0, 3.0));
+            // self.boundaryFill4(frame, &center);
+            self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
             
         }
     }
@@ -224,33 +238,9 @@ impl Screen {
     }
 
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
-        let mut pos1 = pos1;
-        let mut pos2 = pos2;
-        if pos1.x > pos2.x {
-            let pos3 = pos2;
-            pos2 = pos1;
-            pos1 = pos3;
+        for (x, y) in Bresenham::new((pos1.x as isize, pos1.y as isize), (pos2.x as isize, pos2.y as isize)) {
+            self.draw(frame, &position::Vector3::new(x as f64, y as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
         }
-
-        let x_diff = pos2.x - pos1.x;
-        let y_diff = pos2.y - pos1.y;
-
-        let slope = y_diff/x_diff;
-
-        if x_diff == 0.0 {// this needs to be improved
-            for i in cmp::min(0, y_diff as i64)..cmp::max(0, y_diff as i64) as i64 {
-                let highery = cmp::max(pos1.y as i64, pos2.y as i64);
-                self.draw(frame, &position::Vector3::new(pos1.x, highery as f64 + i as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
-            }
-        }
-
-        for i in 0..x_diff as i64 {
-            self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
-            for j in cmp::min(0, slope as i64)..cmp::max(0, slope as i64) as i64 {
-                self.draw(frame, &position::Vector3::new(pos1.x + i as f64, pos1.y + j as f64 + (i as f64*slope), 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
-            }
-        }
-
     }
 
     /// Draw the `World` state to the frame buffer.
