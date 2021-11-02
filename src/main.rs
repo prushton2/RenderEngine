@@ -21,20 +21,23 @@ const HEIGHT: u32 = 720;
 /// Representation of the application state. In this example, a box will bounce around the screen.
 struct Screen {
     bg_color: position::Vector3::vector3,
+    triangles: Vec<object::Triangle::triangle>,
 }
 
+
+
 fn main() {
-    let camera = object::Camera::new(
-        position::Vector3::new(0.0, 0.0, 0.0),
-        position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
-        position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
-    );
-    let rot = math::getAnglesToPoint(&camera, &position::Vector3::new(0.0, 1.0, 0.0));
+    // let camera = object::Camera::new(
+    //     position::Vector3::new(0.0, 0.0, 0.0),
+    //     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
+    //     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
+    // );
+    // let rot = math::getAnglesToPoint(&camera, &position::Vector3::new(0.0, 1.0, 0.0));
 
-    dbg!(&rot.x.angle);
-    dbg!(&rot.y.angle);
+    // dbg!(&rot.x.angle);
+    // dbg!(&rot.y.angle);
 
-    // run();
+    run();
 }
 
 
@@ -129,6 +132,7 @@ impl Screen {
     fn new() -> Self {
         Self {
             bg_color: position::Vector3::new(0.0, 0.0, 0.0),
+            triangles: Vec::new(),
         }
     }
 
