@@ -170,21 +170,38 @@ impl Screen {
     }
 
     fn render(&mut self, frame: &mut [u8]) {
+        self.drawLine(frame, &position::Vector3::new(WIDTH as f64 / 2.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 / 2.0, HEIGHT as f64, 0.0));
         for i in 0..self.triangles.len() {
 
             let i = &self.triangles[i];
+
+            println!("{}, {}, {}", i.pos1.x, i.pos1.y, i.pos1.z);
+            println!("{}, {}, {}", i.pos2.x, i.pos2.y, i.pos2.z);
+            println!("{}, {}, {}", i.pos3.x, i.pos3.y, i.pos3.z);
             
             let angle1 = math::getAnglesToPoint(&self.camera, &i.pos1.clone());
             let angle2 = math::getAnglesToPoint(&self.camera, &i.pos2.clone());
             let angle3 = math::getAnglesToPoint(&self.camera, &i.pos3.clone());
+           
+            println!("-------------");
+            println!("{}, {}, {}", angle1.x.angle, angle1.y.angle, angle1.z.angle);
+            println!("{}, {}, {}", angle2.x.angle, angle2.y.angle, angle2.z.angle);
+            println!("{}, {}, {}", angle3.x.angle, angle3.y.angle, angle3.z.angle);
             
             let pos1 = self.angleToPixel(angle1);
             let pos2 = self.angleToPixel(angle2);
             let pos3 = self.angleToPixel(angle3);
-            
+
+            println!("-------------");
             println!("{}, {}, {}", pos1.x, pos1.y, pos1.z);
             println!("{}, {}, {}", pos2.x, pos2.y, pos2.z);
             println!("{}, {}, {}", pos3.x, pos3.y, pos3.z);
+            println!("-------------");
+            println!("{}, {}, {}", &pos1.mult(&self.scalar).x, &pos1.mult(&self.scalar).y, &pos1.mult(&self.scalar).z);
+            println!("{}, {}, {}", &pos2.mult(&self.scalar).x, &pos2.mult(&self.scalar).y, &pos2.mult(&self.scalar).z);
+            println!("{}, {}, {}", &pos3.mult(&self.scalar).x, &pos3.mult(&self.scalar).y, &pos3.mult(&self.scalar).z);
+
+            println!("----------------------------------");
 
             self.drawLine(frame, &pos1.mult(&self.scalar), &pos2.mult(&self.scalar));
             self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
@@ -195,8 +212,8 @@ impl Screen {
             let mut center = pos1.add(&pos2);
             center = center.add(&pos3);
             center = center.div(&position::Vector3::new(3.0, 3.0, 3.0));
-            // self.boundaryFill4(frame, &center);
-            self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
+            self.boundaryFill4(frame, &center);
+            // self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
             
         }
     }
@@ -206,8 +223,16 @@ impl Screen {
 
         let mut newPos = position::Vector3::new(0.0, 0.0, 0.0);
 
-        newPos.x = angle.x.angle as f64 + MID as f64;
+
+        if angle.x.angle > 180.0 {
+            newPos.x = -1.0 * (360.0 - angle.x.angle) + MID as f64;
+        } else {
+            newPos.x = angle.x.angle as f64 + MID as f64;
+        }
         newPos.y = HEIGHT as f64 - angle.y.angle;
+
+        // newPos.x =  if newPos.x > WIDTH as f64 { newPos.x - WIDTH as f64 } else { newPos.x };
+
         newPos.x = newPos.x.ceil();
         newPos.y = newPos.y.ceil();
         newPos
@@ -238,7 +263,17 @@ impl Screen {
     }
 
     fn drawLine(&mut self, frame: &mut [u8], pos1: &position::Vector3::vector3, pos2: &position::Vector3::vector3) { //pos1.x must be less than pos2.x
-        for (x, y) in Bresenham::new((pos1.x as isize, pos1.y as isize), (pos2.x as isize, pos2.y as isize)) {
+        let mut start;
+        let mut end;
+        if pos2.x < pos1.x {
+            start = pos2;
+            end = pos1;
+        } else {
+            start = pos1;
+            end = pos2;
+        }
+        
+        for (x, y) in Bresenham::new((start.x as isize, start.y as isize), (end.x as isize, end.y as isize)) {
             self.draw(frame, &position::Vector3::new(x as f64, y as f64, 0.0), &position::Vector3::new(0.0, 0.0, 0.0));
         }
     }

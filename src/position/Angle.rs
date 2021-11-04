@@ -12,7 +12,7 @@ impl angle {
     }
     pub fn add(&self, other: &angle) -> angle {
         let mut result = self.angle + other.angle;
-        while(result < 0.0) {
+        while result < 0.0 {
             result += 360.0
         }
         angle{
@@ -21,7 +21,7 @@ impl angle {
     }
     pub fn sub(&self, other: &angle) -> angle {
         let mut result = self.angle - other.angle;
-        while(result < 0.0) {
+        while result < 0.0 {
             result += 360.0
         }
         angle{
@@ -30,7 +30,7 @@ impl angle {
     }
     pub fn mult(&self, other: &angle) -> angle {
         let mut result = self.angle * other.angle;
-        while(result < 0.0) {
+        while result < 0.0 {
             result += 360.0
         }
         angle{
@@ -39,7 +39,7 @@ impl angle {
     }
     pub fn div(&self, other: &angle) -> angle {
         let mut result = self.angle / other.angle;
-        while(result < 0.0) {
+        while result < 0.0 {
             result += 360.0
         }
         angle{

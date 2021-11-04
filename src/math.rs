@@ -15,6 +15,8 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
 
     xzangle = if xzangle.is_nan() { 0.0 } else { xzangle };
 
+    xzangle = if point.x < camera.pos.x { 360.0 - xzangle } else { xzangle };
+
     let a = 1.0;
     let b = getDistance(&position::Vector3::new(0.0, camera.pos.y, camera.pos.z), &position::Vector3::new(0.0, point.y, point.z));
     let c = getDistance(&position::Vector3::new(0.0, point.y, point.z), &position::Vector3::new(0.0, camera.pos.y, camera.pos.z + 1.0));
