@@ -170,11 +170,12 @@ impl Screen {
     }
 
     fn render(&mut self, frame: &mut [u8]) {
-        self.drawLine(frame, &position::Vector3::new(WIDTH as f64 / 2.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 / 2.0, HEIGHT as f64, 0.0));
+        // self.drawLine(frame, &position::Vector3::new(WIDTH as f64 / 2.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 / 2.0, HEIGHT as f64, 0.0));
         for i in 0..self.triangles.len() {
 
             let i = &self.triangles[i];
-
+            
+            println!("----------------------------------");
             println!("{}, {}, {}", i.pos1.x, i.pos1.y, i.pos1.z);
             println!("{}, {}, {}", i.pos2.x, i.pos2.y, i.pos2.z);
             println!("{}, {}, {}", i.pos3.x, i.pos3.y, i.pos3.z);
@@ -196,12 +197,7 @@ impl Screen {
             println!("{}, {}, {}", pos1.x, pos1.y, pos1.z);
             println!("{}, {}, {}", pos2.x, pos2.y, pos2.z);
             println!("{}, {}, {}", pos3.x, pos3.y, pos3.z);
-            println!("-------------");
-            println!("{}, {}, {}", &pos1.mult(&self.scalar).x, &pos1.mult(&self.scalar).y, &pos1.mult(&self.scalar).z);
-            println!("{}, {}, {}", &pos2.mult(&self.scalar).x, &pos2.mult(&self.scalar).y, &pos2.mult(&self.scalar).z);
-            println!("{}, {}, {}", &pos3.mult(&self.scalar).x, &pos3.mult(&self.scalar).y, &pos3.mult(&self.scalar).z);
-
-            println!("----------------------------------");
+            
 
             self.drawLine(frame, &pos1.mult(&self.scalar), &pos2.mult(&self.scalar));
             self.drawLine(frame, &pos2.mult(&self.scalar), &pos3.mult(&self.scalar));
@@ -212,8 +208,8 @@ impl Screen {
             let mut center = pos1.add(&pos2);
             center = center.add(&pos3);
             center = center.div(&position::Vector3::new(3.0, 3.0, 3.0));
-            self.boundaryFill4(frame, &center);
-            // self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
+            // self.boundaryFill4(frame, &center);
+            self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
             
         }
     }
