@@ -17,13 +17,19 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
 
     xzangle = if point.x < camera.pos.x { 360.0 - xzangle } else { xzangle };
 
-    let a = 1.0;
-    let b = getDistance(&position::Vector3::new(0.0, camera.pos.y, camera.pos.z), &position::Vector3::new(0.0, point.y, point.z));
-    let c = getDistance(&position::Vector3::new(0.0, point.y, point.z), &position::Vector3::new(0.0, camera.pos.y, camera.pos.z + 1.0));
+    // Point, Player, Point.x, Point.z, Player.y
+
+    let pos1 = point.clone();                                   //  |          |c
+    let pos2 = camera.pos.clone();                              //  |a    |b
+    let pos3 = position::Vector3::new(pos1.x, pos2.y, pos1.z);  //        |    |
+
+    let a = getDistance(&pos1, &pos2);
+    let b = getDistance(&pos2, &pos3);
+    let c = getDistance(&pos3, &pos1);
 
     let mut yzangle;
 
-    yzangle = radToDegrees( ((a + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b)).acos() );
+    yzangle = radToDegrees( ( (a.powf(2.0) + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b) ).acos() );
 
     yzangle = if yzangle.is_nan() { 0.0 } else { yzangle };
 
