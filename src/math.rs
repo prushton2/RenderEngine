@@ -12,14 +12,20 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
     
     let mut rotation = position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0));
     
-    let a = 1.0;
-    let b = getDistance(&position::Vector3::new(camera.pos.x, 0.0, camera.pos.z), &position::Vector3::new(point.x, 0.0, point.z));
-    let c = getDistance(&position::Vector3::new(point.x, 0.0, point.z), &position::Vector3::new(camera.pos.x, 0.0, camera.pos.z + 1.0));
+    // let a = 1.0;
+    // let b = getDistance(&position::Vector3::new(camera.pos.x, 0.0, camera.pos.z), &position::Vector3::new(point.x, 0.0, point.z));
+    // let c = getDistance(&position::Vector3::new(point.x, 0.0, point.z), &position::Vector3::new(camera.pos.x, 0.0, camera.pos.z + 1.0));
+
+    let a = getDistance(&camera.pos, &position::Vector3::new(point.x, camera.pos.y, point.z));
+    let b = getDistance(&position::Vector3::new(point.x, camera.pos.y, point.z), &camera.pos);
+    let c = getDistance(&position::Vector3::new(point.x, camera.pos.y, point.z), &position::Vector3::new(camera.pos.x, camera.pos.y, point.z));
+
+
     println!("XZ: {}, {}, {}", a, b, c);
 
     let mut xzangle;
 
-    xzangle = radToDegrees( ((a + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b)).acos() );
+    xzangle = radToDegrees( ((a.powf(2.0) + b.powf(2.0) - c.powf(2.0)) / (2.0*a*b)).acos() );
 
     xzangle = if xzangle.is_nan() { 0.0 } else { xzangle };
 

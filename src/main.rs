@@ -160,7 +160,7 @@ impl Screen {
             bg_color: position::Vector3::new(0.0, 0.0, 0.0),
             triangles: Vec::new(),
             camera: object::Camera::new(
-                    position::Vector3::new(0.0, 0.0, 0.0),
+                    position::Vector3::new(-2.0, 0.0, 0.0),
                     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
                     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
                 ),
