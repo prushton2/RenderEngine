@@ -1,6 +1,13 @@
 use crate::position;
 use crate::object;
 
+//WHAT WORKS HERE:
+// Calculating the angles 
+// Distance formula
+
+// Unsure:
+// Assembled each triangle properly
+
 pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vector3::vector3) -> position::Rotation::rotation {
     
     let mut rotation = position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0));
@@ -8,6 +15,7 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
     let a = 1.0;
     let b = getDistance(&position::Vector3::new(camera.pos.x, 0.0, camera.pos.z), &position::Vector3::new(point.x, 0.0, point.z));
     let c = getDistance(&position::Vector3::new(point.x, 0.0, point.z), &position::Vector3::new(camera.pos.x, 0.0, camera.pos.z + 1.0));
+    println!("XZ: {}, {}, {}", a, b, c);
 
     let mut xzangle;
 
@@ -26,6 +34,8 @@ pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vecto
     let a = getDistance(&pos1, &pos2);
     let b = getDistance(&pos2, &pos3);
     let c = getDistance(&pos3, &pos1);
+
+    println!("HEIGHT: {}, {}, {}", a, b, c);
 
     let mut yzangle;
 
