@@ -176,24 +176,25 @@ impl Screen {
             let i = &self.triangles[i];
             
             println!("----------------------------------");
-            println!("{}, {}, {}", i.pos1.x, i.pos1.y, i.pos1.z);
-            println!("{}, {}, {}", i.pos2.x, i.pos2.y, i.pos2.z);
-            println!("{}, {}, {}", i.pos3.x, i.pos3.y, i.pos3.z);
             
+            
+            println!("{}, {}, {}", i.pos1.x, i.pos1.y, i.pos1.z);
             let angle1 = math::getAnglesToPoint(&self.camera, &i.pos1.clone());
-            let angle2 = math::getAnglesToPoint(&self.camera, &i.pos2.clone());
-            let angle3 = math::getAnglesToPoint(&self.camera, &i.pos3.clone());
-           
-            println!("-------------");
             println!("{}, {}, {}", angle1.x.angle, angle1.y.angle, angle1.z.angle);
+            println!("-------------");
+            println!("{}, {}, {}", i.pos2.x, i.pos2.y, i.pos2.z);
+            let angle2 = math::getAnglesToPoint(&self.camera, &i.pos2.clone());
             println!("{}, {}, {}", angle2.x.angle, angle2.y.angle, angle2.z.angle);
+            println!("-------------");
+            println!("{}, {}, {}", i.pos3.x, i.pos3.y, i.pos3.z);
+            let angle3 = math::getAnglesToPoint(&self.camera, &i.pos3.clone());
             println!("{}, {}, {}", angle3.x.angle, angle3.y.angle, angle3.z.angle);
             
             let pos1 = self.angleToPixel(angle1);
             let pos2 = self.angleToPixel(angle2);
             let pos3 = self.angleToPixel(angle3);
 
-            println!("-------------");
+            println!("--------------------------");
             println!("{}, {}, {}", pos1.x, pos1.y, pos1.z);
             println!("{}, {}, {}", pos2.x, pos2.y, pos2.z);
             println!("{}, {}, {}", pos3.x, pos3.y, pos3.z);
