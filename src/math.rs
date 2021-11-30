@@ -1,12 +1,15 @@
 use crate::position;
 use crate::object;
 
-//WHAT WORKS HERE:
-// Calculating the angles 
+// WHAT WORKS HERE:
 // Distance formula
 
 // Unsure:
-// Assembled each triangle properly
+// Assembled each triangle properly //What does this mean again?
+
+// Doesnt Work
+// Calculating the angles
+//    - Some issue with negatives, points arent rendering on the other side of the line
 
 pub fn getAnglesToPoint(camera: &object::Camera::camera, point: &position::Vector3::vector3) -> position::Rotation::rotation {
     

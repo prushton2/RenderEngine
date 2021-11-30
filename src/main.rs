@@ -33,7 +33,6 @@ struct Screen {
 
 
 fn main() {
-
     run(createObjects());
 }
 
@@ -160,7 +159,7 @@ impl Screen {
             bg_color: position::Vector3::new(0.0, 0.0, 0.0),
             triangles: Vec::new(),
             camera: object::Camera::new(
-                    position::Vector3::new(-2.0, 0.0, 0.0),
+                    position::Vector3::new(0.0, 0.0, 0.0),
                     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0)),
                     position::Rotation::new(position::Angle::new(0.0), position::Angle::new(0.0), position::Angle::new(0.0))
                 ),
@@ -170,7 +169,7 @@ impl Screen {
     }
 
     fn render(&mut self, frame: &mut [u8]) {
-        // self.drawLine(frame, &position::Vector3::new(WIDTH as f64 / 2.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 / 2.0, HEIGHT as f64, 0.0));
+        self.drawLine(frame, &position::Vector3::new(WIDTH as f64 / 2.0, 0.0, 0.0), &position::Vector3::new(WIDTH as f64 / 2.0, HEIGHT as f64, 0.0));
         for i in 0..self.triangles.len() {
 
             let i = &self.triangles[i];
@@ -211,8 +210,8 @@ impl Screen {
             center = center.div(&position::Vector3::new(3.0, 3.0, 3.0));
             // self.boundaryFill4(frame, &center);
             self.draw(frame, &center, &position::Vector3::new(255.0, 0.0, 0.0));
-            
         }
+        
     }
 
     fn angleToPixel(&mut self, angle: position::Rotation::rotation) -> position::Vector3::vector3 {
