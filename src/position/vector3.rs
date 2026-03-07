@@ -17,7 +17,6 @@ impl Vector3 {
     }
 }
 
-
 impl_op_ex!(+ |a: &Vector3, b: &Vector3| -> Vector3{
     Vector3{
         x: a.x + b.x,
@@ -49,3 +48,36 @@ impl_op_ex!(/ |a: &Vector3, b: &Vector3| -> Vector3{
         z: a.z / b.z
     }
 });
+
+impl_op_ex_commutative!(+ |a: &Vector3, b: &f64| -> Vector3{
+    Vector3{
+        x: a.x + b,
+        y: a.y + b,
+        z: a.z + b
+    }
+});
+
+impl_op_ex_commutative!(- |a: &Vector3, b: &f64| -> Vector3{
+    Vector3{
+        x: a.x - b,
+        y: a.y - b,
+        z: a.z - b
+    }
+});
+
+impl_op_ex_commutative!(* |a: &Vector3, b: &f64| -> Vector3{
+    Vector3{
+        x: a.x * b,
+        y: a.y * b,
+        z: a.z * b
+    }
+});
+
+impl_op_ex_commutative!(/ |a: &Vector3, b: &f64| -> Vector3{
+    Vector3{
+        x: a.x / b,
+        y: a.y / b,
+        z: a.z / b
+    }
+});
+

@@ -15,11 +15,8 @@ impl Ray {
         }
     }
 
-    pub fn clone(&self) -> Self {
-        Self{
-            origin: self.origin.clone(),
-            direction: self.direction.clone()
-        }
+    pub fn at(&self, t: f64) -> Vector3 {
+        return self.origin + t * self.direction;
     }
 }
 
