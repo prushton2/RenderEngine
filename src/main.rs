@@ -1,27 +1,20 @@
-// #![allow(non_snake_case)]
-// #![allow(dead_code)]
-// #![allow(non_camel_case_types)]
+use minifb::{Key, Window, WindowOptions};
 
 mod position;
 mod object;
-// mod math;
 
-use pixels::{Pixels, SurfaceTexture};
-use winit::dpi::LogicalSize;
-use winit::event_loop::EventLoop;
-use winit::window::WindowBuilder;
-use winit::event::Event;
-use winit::event::WindowEvent;
-use winit::event_loop::ControlFlow;
-// use std::cmp;
+const WIDTH: usize = 1280; //Resolution
+const HEIGHT: usize = 720;
 
-// use bresenham::Bresenham;
+fn get_pixel_color(camera: &object::Camera, x: f64, y: f64) -> u32 {
+    // let x = (i % WIDTH) as f64;
+    // let y = (i / WIDTH) as f64;
 
-const WIDTH: u32 = 1280; //Resolution
-const HEIGHT: u32 = 720;
+    let pixel_center = camera.pixel00_loc + (x * camera.pixel_delta_w) + (y * camera.pixel_delta_h);
+    let ray_direction = pixel_center - camera.pos;
+    let ray = position::Ray::new(&camera.pos, &ray_direction);
 
-fn ray_color(ray: &position::Ray) -> (u8, u8, u8) {
-    (0, 0, ((ray.direction.y+1.0) * 128.0) as u8)
+    ((ray.direction.y+1.0) * 128.0) as u32
 }
 
 fn main() {
@@ -33,66 +26,30 @@ fn main() {
         2.0
     );
 
-    // event loop
-    let event_loop = EventLoop::new();
+    minifbwindow(&camera);
+}
 
-    // create window
-    let window = WindowBuilder::new()
-        .with_inner_size(LogicalSize::new(WIDTH, HEIGHT))
-        .build(&event_loop).unwrap();
-
-    // a surface texture is the bridge between the pixel buffer and the window
-    let surface = SurfaceTexture::new(WIDTH, HEIGHT, &window);
-    let mut pixels = Pixels::new(WIDTH, HEIGHT, surface).unwrap();
-
-    // get a mutable reference to the raw RGBA pixel buffer
-    let frame = pixels.get_frame();
-    for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-        let x = (i as u32 % WIDTH) as f64;
-        let y = (i as u32 / WIDTH) as f64;
-
-        let pixel_center = camera.pixel00_loc + (x * camera.pixel_delta_w) + (y * camera.pixel_delta_h);
-        let ray_direction = pixel_center - camera.pos;
-        let ray = position::Ray::new(&camera.pos, &ray_direction);
-
-        let color = ray_color(&ray);
-
-        println!("{} {} {}", ray.direction.x, ray.direction.y, ray.direction.z);
-
-        pixel[0] = color.0; // R
-        pixel[1] = color.1; // G
-        pixel[2] = color.2; // B
-        pixel[3] = 0xff; // A
-    }
-
-    // put pixels into surface or frame idk for sure
-    pixels.render().unwrap();
-
-    // actual event loop, we move stuff into here since this is the lifetime of the window now
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Poll; // poll for events
-
-        // switch on event
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-
-            Event::RedrawRequested(_) => {
-                // draw your pixels here
-                let frame = pixels.get_frame();
-                // ... fill frame ...
-                pixels.render().unwrap();
-            }
-
-            Event::MainEventsCleared => {
-                window.request_redraw();
-            }
-
-            _ => {}
+fn minifbwindow(camera: &object::Camera) {
+    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
+    let mut window = Window::new(
+        "Pixel Demo", 
+        WIDTH, HEIGHT, 
+        WindowOptions {
+            borderless: false,  // true = no decorations at all
+            title: true,        // show title bar
+            resize: true,
+        ..WindowOptions::default()
         }
-    });
+    ).unwrap();
+
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        // Draw pixels: format is 0x00RRGGBB
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
+                buffer[y * WIDTH + x] = get_pixel_color(&camera, x as f64, y as f64);
+            }
+        }
+        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+    }
 }

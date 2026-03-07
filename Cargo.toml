@@ -1,17 +1,12 @@
 [package]
 name = "RenderEngine"
-version = "1.56.0"
-edition = "2021"
+version = "1.93.0"
+edition = "2024"
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#Pixels required libraries
-pixels = "0.7.0"
-winit = "0.25.0"
-winit_input_helper = "0.10.0"
-log = "0.4.14"
-
-bresenham = "0.1.1"
 auto_ops = "0.3.0"
+minifb = "0.28.0"
+winit = "0.30.13"
