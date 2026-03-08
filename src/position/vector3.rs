@@ -8,12 +8,17 @@ pub struct Vector3 {
 }
 
 impl Vector3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self{
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self{
             x: x, 
             y: y, 
             z: z
         }
+    }
+
+    pub fn dot(&self, other: &Vector3) -> f64 {
+        let product = self * other;
+        product.x + product.y + product.z
     }
 }
 
