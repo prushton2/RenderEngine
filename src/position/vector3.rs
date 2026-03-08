@@ -1,6 +1,6 @@
 use auto_ops::*;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Vector3 {
     pub x: f64,
     pub y: f64, 
@@ -19,6 +19,11 @@ impl Vector3 {
     pub fn dot(&self, other: &Vector3) -> f64 {
         let product = self * other;
         product.x + product.y + product.z
+    }
+
+    pub fn normalize(&self) -> Vector3 {
+        let len = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
+        Vector3::new(self.x / len, self.y / len, self.z / len)
     }
 }
 

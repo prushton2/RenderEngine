@@ -8,11 +8,8 @@ const WIDTH: usize = 1280; //Resolution
 const HEIGHT: usize = 720;
 
 fn get_pixel_color(camera: &object::Camera, sphere: &object::Sphere, x: f64, y: f64) -> u32 {
-    // let x = (i % WIDTH) as f64;
-    // let y = (i / WIDTH) as f64;
-
     let pixel_center = camera.pixel00_loc() + (x * camera.pixel_delta_w()) + (y * camera.pixel_delta_h());
-    let ray_direction = pixel_center - camera.pos();
+    let ray_direction = (pixel_center - camera.pos()).normalize();
     let ray = position::Ray::new(&camera.pos(), &ray_direction);
 
     if sphere.intersects(&ray) {
@@ -26,12 +23,12 @@ fn main() {
     let mut camera = object::Camera::new(
         position::Vector3::new(0.0, 0.0, 0.0),
         position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
-        1.0,
+        3.0,
         (WIDTH as f64, HEIGHT as f64),
         2.0
     );
 
-    let sphere = object::Sphere::new(&position::Vector3::new(0.0, 0.0, 1.0), 0.5);
+    let sphere = object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5);
 
     minifbwindow(&mut camera, &sphere);
 }
@@ -57,7 +54,7 @@ fn minifbwindow(camera: &mut object::Camera, sphere: &object::Sphere) {
             }
         }
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(((1.0/60.0)*1000.0) as u64));
+        std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64));
 
         if window.is_key_down(Key::S) {
             camera.move_camera(position::Vector3::new(0.0, 0.0, -0.1));

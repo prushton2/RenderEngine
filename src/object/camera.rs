@@ -29,7 +29,7 @@ impl Camera {
         let pixel_delta_h: position::Vector3 = viewport_h / window_dimensions.1;
 
         let viewport_upper_left_corner = pos + position::Vector3::new(0.0, 0.0, focal_length) - viewport_w/2.0 - viewport_h/2.0;
-
+        
         Self {
             pos: pos,
             dir: dir,
