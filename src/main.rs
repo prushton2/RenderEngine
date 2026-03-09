@@ -1,4 +1,5 @@
 use minifb::{Key, Window, WindowOptions};
+
 use crate::object::renderable::Renderable;
 
 mod position;
@@ -9,10 +10,11 @@ const HEIGHT: usize = 720;
 
 fn get_pixel_color(camera: &object::Camera, sphere: &object::Sphere, x: f64, y: f64) -> u32 {
     let pixel_center = camera.pixel00_loc() + (x * camera.pixel_delta_w()) + (y * camera.pixel_delta_h());
-    let ray_direction = (pixel_center - camera.pos()).normalize();
+    let ray_direction = pixel_center - camera.pos();
     let ray = position::Ray::new(&camera.pos(), &ray_direction);
+    let intersects = sphere.intersects(&ray);
 
-    if sphere.intersects(&ray) {
+    if intersects.is_some() && intersects.unwrap() > 0.0 {
         0x00FF0000
     } else {
         ((ray.direction.y+1.0) * 128.0) as u32
@@ -22,7 +24,7 @@ fn get_pixel_color(camera: &object::Camera, sphere: &object::Sphere, x: f64, y: 
 fn main() {
     let mut camera = object::Camera::new(
         position::Vector3::new(0.0, 0.0, 0.0),
-        position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
+        // position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
         3.0,
         (WIDTH as f64, HEIGHT as f64),
         2.0
@@ -48,13 +50,21 @@ fn minifbwindow(camera: &mut object::Camera, sphere: &object::Sphere) {
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // format is 0x00RRGGBB
+        let start = std::time::Instant::now();
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
                 buffer[y * WIDTH + x] = get_pixel_color(&camera, &sphere, x as f64, y as f64);
             }
         }
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
-        std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64));
+        
+        let elapsed = start.elapsed();
+        print!("\x1B[2J\x1B[1;1H");
+        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}", elapsed.as_millis(), camera.pos());
+        
+        if elapsed.as_millis() < (1000.0/60.0) as u128 {
+            std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64 - elapsed.as_millis() as u64));
+        }
 
         if window.is_key_down(Key::S) {
             camera.move_camera(position::Vector3::new(0.0, 0.0, -0.1));

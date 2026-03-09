@@ -16,14 +16,19 @@ impl Sphere {
 }
 
 impl Renderable for Sphere {
-    fn intersects(&self, ray: &position::Ray) -> bool {
+    fn intersects(&self, ray: &position::Ray) -> Option<f64> {
         let a = ray.direction.dot(&ray.direction);
         let b = -2.0*ray.direction.dot(&(self.center - ray.origin));
         let c = (self.center - ray.origin).dot(&(self.center - ray.origin)) - self.radius * self.radius;
 
         let discriminant = b*b-4.0*a*c;
 
+        if discriminant < 0.0 {
+            return None;
+        } else {
+            return Some((-b - discriminant.sqrt() ) / (2.0*a));
+        }
         
-        return discriminant >= 0.0
+        // return discriminant >= 0.0
     }
 }

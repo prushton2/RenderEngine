@@ -3,7 +3,7 @@ use crate::position;
 pub struct Camera {
     // inputs
     pos: position::Vector3,
-    dir: position::Ray,
+    // dir: position::Ray,
 
     focal_length: f64,
     window_dimensions: (f64, f64),
@@ -16,7 +16,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(pos: position::Vector3, dir: position::Ray, focal_length: f64, window_dimensions: (f64, f64), viewport_height: f64) -> Self{
+    pub fn new(pos: position::Vector3, focal_length: f64, window_dimensions: (f64, f64), viewport_height: f64) -> Self{
 
         let viewport_width = viewport_height * (window_dimensions.0 / window_dimensions.1);
         
@@ -32,7 +32,7 @@ impl Camera {
         
         Self {
             pos: pos,
-            dir: dir,
+            // dir: dir,
 
             focal_length: focal_length,
             window_dimensions: window_dimensions,
@@ -80,8 +80,8 @@ impl Camera {
     pub fn pos(&self) -> position::Vector3 {
         return self.pos;
     }
-    pub fn dir(&self) -> position::Ray {
-        return self.dir;
-    }
+    // pub fn dir(&self) -> position::Ray {
+    //     return self.dir;
+    // }
 
 }

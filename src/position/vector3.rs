@@ -21,9 +21,16 @@ impl Vector3 {
         product.x + product.y + product.z
     }
 
-    pub fn normalize(&self) -> Vector3 {
-        let len = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
-        Vector3::new(self.x / len, self.y / len, self.z / len)
+    pub fn length_sq(&self) -> f64 {
+        self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    pub fn length(&self) -> f64 {
+        self.length_sq().sqrt()
+    }
+
+    pub fn unit_vector(&self) -> Vector3 {
+        self / self.length()
     }
 }
 
