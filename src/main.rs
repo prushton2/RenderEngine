@@ -16,8 +16,8 @@ fn get_pixel_color(camera: &object::Camera, sphere: &object::Sphere, x: f64, y: 
 
     if intersects.is_some() && intersects.unwrap() > 0.0 {
         let t = intersects.unwrap();
-        let N = (ray.at(t) - position::Vector3::new(0.0, 0.0, 5.0)).unit_vector();
-        ((N.x*255.0) as u32) << 16 | ((N.y*255.0) as u32) << 8 | ((N.z*-255.0) as u32)
+        let n = (ray.at(t) - position::Vector3::new(0.0, 0.0, 5.0)).unit_vector();
+        ((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32)
 
     } else {
         0x00000088
