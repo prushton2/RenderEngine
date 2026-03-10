@@ -33,5 +33,8 @@ impl Renderable for Sphere {
     fn color(&self, surface_pos: &position::Vector3) -> u32 {
         let n = (surface_pos - self.center).unit_vector();
         ((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32)
+        // ((n.y*128.0) as u32) << 16 | ((n.y*37.5) as u32) << 8 | ((n.y*40.0) as u32) |
+        // 0x00802528
+        // ((n.y*-128.0) as u32) << 16 | ((n.y*-37.5) as u32) << 8 | ((n.y*-40.0) as u32)
     }
 }

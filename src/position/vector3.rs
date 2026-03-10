@@ -16,6 +16,14 @@ impl Vector3 {
         }
     }
 
+    pub fn zero() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0
+        }
+    }
+
     pub fn dot(&self, other: &Vector3) -> f64 {
         let product = self * other;
         product.x + product.y + product.z

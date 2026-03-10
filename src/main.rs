@@ -49,6 +49,11 @@ fn main() {
         Box::new(object::Sphere::new(&position::Vector3::new(0.0, 0.0, 7.0), 0.1)),
         Box::new(object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5)),
         Box::new(object::Sphere::new(&position::Vector3::new(-2.0, -0.4, 5.0), 0.1))
+        // Box::new(object::Sphere::new(&position::Vector3::new(-0.75, 0.2, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&position::Vector3::new(0.75, 0.2, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 1.0, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 2.0, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 3.0, 5.0), 0.5))
     ];
 
     // let sphere = object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5);
