@@ -28,7 +28,10 @@ impl Renderable for Sphere {
         } else {
             return Some((h - discriminant.sqrt() ) / a);
         }
-        
-        // return discriminant >= 0.0
+    }
+
+    fn color(&self, surface_pos: &position::Vector3) -> u32 {
+        let n = (surface_pos - self.center).unit_vector();
+        ((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32)
     }
 }
