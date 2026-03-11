@@ -42,7 +42,7 @@ fn main() {
         // position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
         3.0,
         (WIDTH as f64, HEIGHT as f64),
-        90.0
+        60.0
     );
 
     let objects: Vec<Box<dyn object::Renderable>> = vec![

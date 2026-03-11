@@ -56,8 +56,8 @@ impl Camera {
         let v = w.cross(&u);
 
         // just the width and height but as a vector 3 for easy math
-        let viewport_w = position::Vector3::new(viewport_width, 0.0, 0.0) * u; // across horizontal edge
-        let viewport_h = position::Vector3::new(0.0, -viewport_height, 0.0) * v; // down vertical edge
+        let viewport_w = u * viewport_width;     // across horizontal edge
+        let viewport_h = v * -viewport_height;   // down vertical edge
 
         // distance between pixels in terms of the raycast (how far to move the raycast between each pixel)
         self.pixel_delta_w = viewport_w / self.window_dimensions.0;
@@ -74,7 +74,6 @@ impl Camera {
     pub fn move_camera(&mut self, delta: position::Vector3) {
         self.pos = self.pos + delta;
         self.dir = self.dir + delta;
-        self.up = self.up + delta;
         self.update_outputs();
     }
 
