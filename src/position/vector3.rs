@@ -114,3 +114,10 @@ impl_op_ex_commutative!(/ |a: &Vector3, b: &f64| -> Vector3{
     }
 });
 
+impl_op!(- |a: &Vector3| -> Vector3 { 
+    Vector3{ 
+        x: -a.x,
+        y: -a.y,
+        z: -a.z
+    }
+});

@@ -79,7 +79,8 @@ impl Camera {
 
     pub fn turn_camera(&mut self, delta: position::Vector3) {
         // what do i even do lmao
-        self.dir = self.dir * -1.0;
+        let delta_dir = -1.0 * (self.dir - self.pos);
+        self.dir = self.pos + delta_dir;
         self.update_outputs();
     }
 
