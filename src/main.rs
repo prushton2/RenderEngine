@@ -42,7 +42,7 @@ fn main() {
         // position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
         3.0,
         (WIDTH as f64, HEIGHT as f64),
-        2.0
+        90.0
     );
 
     let objects: Vec<Box<dyn object::Renderable>> = vec![
@@ -109,6 +109,9 @@ fn minifbwindow(camera: &mut object::Camera, objects: &Vec<Box<dyn object::Rende
         }
         if window.is_key_down(Key::LeftCtrl) {
             camera.move_camera(position::Vector3::new(0.0, -0.1, 0.0));
+        }
+        if window.is_key_down(Key::Down) {
+            camera.turn_camera(position::Vector3::zero());
         }
     }
 }

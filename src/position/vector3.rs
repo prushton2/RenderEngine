@@ -40,6 +40,14 @@ impl Vector3 {
     pub fn unit_vector(&self) -> Vector3 {
         self / self.length()
     }
+
+    pub fn cross(&self, other: &Vector3) -> Vector3 {
+        Vector3{
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x
+        }
+    }
 }
 
 impl_op_ex!(+ |a: &Vector3, b: &Vector3| -> Vector3{
