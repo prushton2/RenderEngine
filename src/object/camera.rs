@@ -19,7 +19,9 @@ pub struct Camera {
 impl Camera {
     pub fn new(pos: position::Vector3, focal_length: f64, window_dimensions: (f64, f64), vfov: f64) -> Self{
 
-        let lookat = position::Vector3::new(0.0, 0.0, focal_length);
+        let angle: f64 = 1.0 * position::math::PI;
+
+        let lookat = position::Vector3::new(angle.cos() * focal_length, 0.0, angle.sin() * focal_length);
         let up = position::Vector3::new(0.0, 1.0, 0.0);
 
         let mut this = Self {
@@ -79,14 +81,16 @@ impl Camera {
     }
 
     pub fn turn_camera(&mut self, delta: position::Vector3) {
+
         // what do i even do lmao
-        let relative_dir = (self.dir - self.pos) / self.focal_length;
-        let angle = relative_dir.x.acos() * if relative_dir.z.asin() < 0.0 { -1.0 } else { 1.0 };
-        let angle = angle + delta.z;
+        // let relative_dir = (self.dir - self.pos) / self.focal_length;
+        // let angle = relative_dir.x.acos() * if relative_dir.z.asin() < 0.0 { -1.0 } else { 1.0 };
+        // let angle = angle + delta.z;
 
-        let relative_dir = position::Vector3::new(angle.cos(), 0.0, angle.sin()) * self.focal_length;
-        self.dir = relative_dir + self.pos;
+        // let relative_dir = position::Vector3::new(angle.cos(), 0.0, angle.sin()) * self.focal_length;
+        // self.dir = relative_dir + self.pos;
 
+        println!("Looking at {:?}", self.dir);
         // println!("Angle {}", angle);
 
         // self.dir = self.pos + delta_dir;
