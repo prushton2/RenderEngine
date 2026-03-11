@@ -47,6 +47,7 @@ impl Camera {
         let theta = position::math::degrees_to_radians(self.vfov);
         let h = (theta/2.0).tan();
 
+        // viewport math (i understand all of this aside from h)
         let viewport_height = 2.0 * h * self.focal_length;
         let viewport_width = viewport_height * (self.window_dimensions.0/self.window_dimensions.1);
 
@@ -79,8 +80,16 @@ impl Camera {
 
     pub fn turn_camera(&mut self, delta: position::Vector3) {
         // what do i even do lmao
-        let delta_dir = -1.0 * (self.dir - self.pos);
-        self.dir = self.pos + delta_dir;
+        let relative_dir = (self.dir - self.pos) / self.focal_length;
+        let angle = relative_dir.x.acos() * if relative_dir.z.asin() < 0.0 { -1.0 } else { 1.0 };
+        let angle = angle + delta.z;
+
+        let relative_dir = position::Vector3::new(angle.cos(), 0.0, angle.sin()) * self.focal_length;
+        self.dir = relative_dir + self.pos;
+
+        // println!("Angle {}", angle);
+
+        // self.dir = self.pos + delta_dir;
         self.update_outputs();
     }
 

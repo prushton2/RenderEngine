@@ -110,8 +110,11 @@ fn minifbwindow(camera: &mut object::Camera, objects: &Vec<Box<dyn object::Rende
         if window.is_key_down(Key::LeftCtrl) {
             camera.move_camera(position::Vector3::new(0.0, -0.1, 0.0));
         }
-        if window.is_key_down(Key::Down) {
-            camera.turn_camera(position::Vector3::zero());
+        if window.is_key_down(Key::Left) {
+            camera.turn_camera(position::Vector3::new(0.0, 0.0, -0.1));
+        }
+        if window.is_key_down(Key::Right) {
+            camera.turn_camera(position::Vector3::new(0.0, 0.0, 0.1));
         }
     }
 }
