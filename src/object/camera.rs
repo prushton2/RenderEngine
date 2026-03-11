@@ -71,7 +71,13 @@ impl Camera {
 
         // where is the upper left pixel
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
+    }
 
+    pub fn set_pos(&mut self, pos: position::Vector3) {
+        self.pos = pos;
+        let delta_dir = self.dir - self.pos;
+        self.dir = pos;
+        self.update_outputs();
     }
 
     pub fn move_camera(&mut self, delta: position::Vector3) {
@@ -80,20 +86,13 @@ impl Camera {
         self.update_outputs();
     }
 
-    pub fn turn_camera(&mut self, delta: position::Vector3) {
-
-        // what do i even do lmao
-        let relative_dir = (self.dir - self.pos) / self.focal_length;
-        let angle = relative_dir.x.acos() * if relative_dir.z.asin() < 0.0 { -1.0 } else { 1.0 };
-        let angle = angle + delta.z;
-
-        let relative_dir = position::Vector3::new(angle.cos(), 0.0, angle.sin()) * self.focal_length;
-        self.dir = relative_dir + self.pos;
-
-        println!("Looking at {:?}", self.dir);
-        println!("Angle {}", angle);
-
-        // self.dir = self.pos + delta_dir;
+    pub fn set_dir_absolute(&mut self, pos: position::Vector3) {
+        self.dir = pos;
+        self.update_outputs();
+    }
+    
+    pub fn set_dir_relative(&mut self, dir: position::Vector3) {
+        self.dir = self.pos + (dir * self.focal_length);
         self.update_outputs();
     }
 
@@ -110,8 +109,8 @@ impl Camera {
     pub fn pos(&self) -> position::Vector3 {
         return self.pos;
     }
-    // pub fn dir(&self) -> position::Ray {
-    //     return self.dir;
-    // }
+    pub fn dir_absolute(&self) -> position::Vector3 {
+        return self.dir;
+    }
 
 }

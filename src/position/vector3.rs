@@ -24,6 +24,18 @@ impl Vector3 {
         }
     }
 
+    pub fn pitch(&self) -> f64 {
+        self.x
+    }
+
+    pub fn roll(&self) -> f64 {
+        self.y
+    }
+
+    pub fn yaw(&self) -> f64 {
+        self.z
+    }
+
     pub fn dot(&self, other: &Vector3) -> f64 {
         let product = self * other;
         product.x + product.y + product.z

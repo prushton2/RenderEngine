@@ -37,12 +37,15 @@ fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Render
 }
 
 fn main() {
-    let mut camera = object::Camera::new(
+    let camera = object::Camera::new(
         position::Vector3::new(0.0, 0.0, 0.0),
-        // position::Ray::new(&position::Vector3::new(0.0, 0.0, 0.0), &position::Vector3::new(0.0, 0.0, 0.0)),
         3.0,
         (WIDTH as f64, HEIGHT as f64),
         60.0
+    );
+
+    let mut player = object::Player::new(
+        camera
     );
 
     let objects: Vec<Box<dyn object::Renderable>> = vec![
@@ -58,10 +61,10 @@ fn main() {
 
     // let sphere = object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5);
 
-    minifbwindow(&mut camera, &objects);
+    minifbwindow(&mut player, &objects);
 }
 
-fn minifbwindow(camera: &mut object::Camera, objects: &Vec<Box<dyn object::Renderable>>) {
+fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Renderable>>) {
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     let mut window = Window::new(
         "Render Engine",
@@ -79,42 +82,50 @@ fn minifbwindow(camera: &mut object::Camera, objects: &Vec<Box<dyn object::Rende
         let start = std::time::Instant::now();
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
-                buffer[y * WIDTH + x] = get_pixel_color(&camera, &objects, x as f64, y as f64);
+                buffer[y * WIDTH + x] = get_pixel_color(player.get_camera(), &objects, x as f64, y as f64);
             }
         }
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
         
         let elapsed = start.elapsed();
         print!("\x1B[2J\x1B[1;1H");
-        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}", elapsed.as_millis(), camera.pos());
+        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}", elapsed.as_millis(), player.get_camera().pos());
         
         if elapsed.as_millis() < (1000.0/60.0) as u128 {
             std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64 - elapsed.as_millis() as u64));
         }
 
-        if window.is_key_down(Key::S) {
-            camera.move_camera(position::Vector3::new(0.0, 0.0, -0.1));
-        }
         if window.is_key_down(Key::W) {
-            camera.move_camera(position::Vector3::new(0.0, 0.0, 0.1));
+            player.move_player(&position::Vector3::new(0.0, 0.0, 0.1));
+        }
+        if window.is_key_down(Key::S) {
+            player.move_player(&position::Vector3::new(0.0, 0.0, -0.1));
         }
         if window.is_key_down(Key::A) {
-            camera.move_camera(position::Vector3::new(-0.1, 0.0, 0.0));
+            player.move_player(&position::Vector3::new(-0.1, 0.0, 0.0));
         }
         if window.is_key_down(Key::D) {
-            camera.move_camera(position::Vector3::new(0.1, 0.0, 0.0));
+            player.move_player(&position::Vector3::new(0.1, 0.0, 0.0));
         }
         if window.is_key_down(Key::Space) {
-            camera.move_camera(position::Vector3::new(0.0, 0.1, 0.0));
+            player.move_player(&position::Vector3::new(0.0, 0.1, 0.0));
         }
         if window.is_key_down(Key::LeftCtrl) {
-            camera.move_camera(position::Vector3::new(0.0, -0.1, 0.0));
+            player.move_player(&position::Vector3::new(0.0, -0.1, 0.0));
         }
+
         if window.is_key_down(Key::Left) {
-            camera.turn_camera(position::Vector3::new(0.0, 0.0, 0.05));
+            player.change_rotation(position::Vector3::new(0.0, 0.0, -0.05));
         }
         if window.is_key_down(Key::Right) {
-            camera.turn_camera(position::Vector3::new(0.0, 0.0, -0.05));
+            player.change_rotation(position::Vector3::new(0.0, 0.0, 0.05));
+        }
+
+        if window.is_key_down(Key::Up) {
+            player.change_rotation(position::Vector3::new(0.05, 0.0, 0.0));
+        }
+        if window.is_key_down(Key::Down) {
+            player.change_rotation(position::Vector3::new(-0.05, 0.0, 0.0));
         }
     }
 }
