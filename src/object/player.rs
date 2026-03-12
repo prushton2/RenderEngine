@@ -51,4 +51,10 @@ impl Player {
     pub fn get_camera(&self) -> &object::Camera {
         &self.camera
     }
+
+    pub fn update_outputs(&mut self) {
+        self.camera.update_outputs();
+    }
 }
+
+unsafe impl Sync for Player {}

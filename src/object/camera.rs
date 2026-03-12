@@ -5,6 +5,7 @@ pub struct Camera {
     pos: ds::Vector3,
     dir: ds::Vector3,
     up:  ds::Vector3,
+    dirty: bool,
 
     window_dimensions: (f64, f64),
     focal_length: f64,
@@ -27,7 +28,9 @@ impl Camera {
         let mut this = Self {
             pos: pos,
             dir: lookat,
-            up: up,            
+            up: up,
+            dirty: true,
+
             window_dimensions: window_dimensions,
             focal_length: 0.0,
             vfov: vfov,
@@ -42,7 +45,12 @@ impl Camera {
         this
     }
 
-    fn update_outputs(&mut self) {
+    pub fn update_outputs(&mut self) {
+        if !self.dirty {
+            return
+        }
+        self.dirty = false;
+
         self.focal_length = (self.dir - self.pos).length();
 
         // man idk what this does
@@ -77,23 +85,23 @@ impl Camera {
         self.pos = pos;
         let delta_dir = self.dir - self.pos;
         self.dir = pos;
-        self.update_outputs();
+        self.dirty = true;
     }
 
     pub fn move_camera(&mut self, delta: ds::Vector3) {
         self.pos = self.pos + delta;
         self.dir = self.dir + delta;
-        self.update_outputs();
+        self.dirty = true;
     }
 
     pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
         self.dir = pos;
-        self.update_outputs();
+        self.dirty = true;
     }
     
     pub fn set_dir_relative(&mut self, dir: ds::Vector3) {
         self.dir = self.pos + (dir * self.focal_length);
-        self.update_outputs();
+        self.dirty = true;
     }
 
     pub fn pixel_delta_w(&self) -> ds::Vector3 {
@@ -114,3 +122,5 @@ impl Camera {
     }
 
 }
+
+unsafe impl Sync for Camera {}

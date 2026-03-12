@@ -1,6 +1,6 @@
 use crate::ds;
 
-pub trait Renderable {
+pub trait Renderable: Send + Sync {
     fn intersects(&self, ray: &ds::Ray) -> Option<f64>;
     fn color(&self, surface_pos: &ds::Vector3) -> u32;
 }
