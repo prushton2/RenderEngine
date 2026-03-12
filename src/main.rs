@@ -92,40 +92,41 @@ fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Rende
         println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", elapsed.as_millis(), player.get_camera().pos(), player.get_rotation());
         
         if elapsed.as_millis() < (1000.0/60.0) as u128 {
+            println!("\n\n Sleeping for {}ms", (1000.0/60.0) as u64 - elapsed.as_millis() as u64);
             std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64 - elapsed.as_millis() as u64));
         }
 
         if window.is_key_down(Key::W) {
-            player.move_player(&position::Vector3::new(0.0, 0.0, 0.1));
+            player.move_player(&position::Vector3::new(0.0, 0.0, 0.05));
         }
         if window.is_key_down(Key::S) {
-            player.move_player(&position::Vector3::new(0.0, 0.0, -0.1));
+            player.move_player(&position::Vector3::new(0.0, 0.0, -0.05));
         }
         if window.is_key_down(Key::A) {
-            player.move_player(&position::Vector3::new(-0.1, 0.0, 0.0));
+            player.move_player(&position::Vector3::new(-0.05, 0.0, 0.0));
         }
         if window.is_key_down(Key::D) {
-            player.move_player(&position::Vector3::new(0.1, 0.0, 0.0));
+            player.move_player(&position::Vector3::new(0.05, 0.0, 0.0));
         }
         if window.is_key_down(Key::Space) {
-            player.move_player(&position::Vector3::new(0.0, 0.1, 0.0));
+            player.move_player(&position::Vector3::new(0.0, 0.05, 0.0));
         }
         if window.is_key_down(Key::LeftCtrl) {
-            player.move_player(&position::Vector3::new(0.0, -0.1, 0.0));
+            player.move_player(&position::Vector3::new(0.0, -0.05, 0.0));
         }
 
         if window.is_key_down(Key::Left) {
-            player.change_rotation(position::Vector3::new(0.0, 0.0, -0.05));
+            player.change_rotation(position::Vector3::new(0.0, 0.0, -0.025));
         }
         if window.is_key_down(Key::Right) {
-            player.change_rotation(position::Vector3::new(0.0, 0.0, 0.05));
+            player.change_rotation(position::Vector3::new(0.0, 0.0, 0.025));
         }
 
         if window.is_key_down(Key::Up) {
-            player.change_rotation(position::Vector3::new(0.05, 0.0, 0.0));
+            player.change_rotation(position::Vector3::new(0.025, 0.0, 0.0));
         }
         if window.is_key_down(Key::Down) {
-            player.change_rotation(position::Vector3::new(-0.05, 0.0, 0.0));
+            player.change_rotation(position::Vector3::new(-0.025, 0.0, 0.0));
         }
     }
 }
