@@ -89,7 +89,7 @@ fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Rende
         
         let elapsed = start.elapsed();
         print!("\x1B[2J\x1B[1;1H");
-        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}", elapsed.as_millis(), player.get_camera().pos());
+        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", elapsed.as_millis(), player.get_camera().pos(), player.get_rotation());
         
         if elapsed.as_millis() < (1000.0/60.0) as u128 {
             std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64 - elapsed.as_millis() as u64));
