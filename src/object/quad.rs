@@ -34,13 +34,28 @@ impl Renderable for Quad {
             return None
         }
 
-        let numerator = self.d - self.normal.dot(&ray.origin);
+        let t = (self.d - self.normal.dot(&ray.origin))/denominator;
 
-        return Some(numerator/denominator)
+        // Compute the hit point, then express it relative to quad corner q
+        let intersection = ray.at(t);
+        let planar_hit = intersection - self.q;
+
+        // Project onto u and v axes using their squared lengths
+        let u_len_sq = self.u.length_sq();
+        let v_len_sq = self.v.length_sq();
+
+        let alpha = self.u.dot(&planar_hit) / u_len_sq;
+        let beta  = self.v.dot(&planar_hit) / v_len_sq;
+
+        if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
+            return None;
+        }
+
+        return Some(t)
     }
 
 
     fn color(&self, surface_pos: &ds::Vector3) -> u32 {
-        0x000000FF
+        0x00333333
     }
 }

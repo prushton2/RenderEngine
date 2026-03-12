@@ -48,4 +48,12 @@ impl Interval {
         self.min -= size/2.0;
         self.max += size/2.0;
     }
+
+    pub fn min(&self) -> f64 {
+        self.min
+    }
+
+    pub fn max(&self) -> f64 {
+        self.max
+    }
 }

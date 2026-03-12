@@ -1,16 +1,19 @@
 use crate::ds;
 use crate::object::Renderable;
+use crate::object::Intersectable;
 
 pub struct Sphere {
     center: ds::Vector3,
-    radius: f64
+    radius: f64,
+    bbox: ds::Aabb
 }
 
 impl Sphere {
     pub fn new(center: &ds::Vector3, radius: f64) -> Self {
         Self {
             center: center.clone(),
-            radius: radius
+            radius: radius,
+            bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
         }
     }
 }

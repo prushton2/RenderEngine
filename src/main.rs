@@ -13,7 +13,7 @@ fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Render
     let ray = ds::Ray::new(&camera.pos(), &ray_direction);
 
     let mut lowest_distance: Option<f64> = None;
-    let mut color = 0x00333333;
+    let mut color = 0x0087CEEB;
 
     for object in objects {
         let intersects = object.intersects(&ray);
@@ -52,7 +52,10 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 7.0), 0.1)),
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
-        Box::new(object::Quad::new(&ds::Vector3::new(-0.5, 0.0, 9.0), &ds::Vector3::new(0.0, 1.0, 0.0), &ds::Vector3::new(1.0, 0.0, 0.0)))
+        Box::new(object::Quad::new(&ds::Vector3::new(-10.0, -2.0, -10.0), &ds::Vector3::new(20.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 20.0))),
+
+        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+
         // Box::new(object::Sphere::new(&ds::Vector3::new(-0.75, -0.8, 5.0), 0.5)),
         // Box::new(object::Sphere::new(&ds::Vector3::new(0.75, -0.8, 5.0), 0.5)),
         // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
