@@ -10,3 +10,6 @@ resolver = "2"
 auto_ops = "0.3.0"
 minifb = "0.28.0"
 winit = "0.30.13"
+
+[profile.release]
+debug = true
