@@ -1,6 +1,10 @@
 pub mod vector3;
 pub mod ray;
 pub mod math;
+pub mod interval;
+pub mod aabb;
 
 pub use vector3::Vector3;
 pub use ray::Ray;
+pub use interval::Interval;
+pub use aabb::Aabb;
