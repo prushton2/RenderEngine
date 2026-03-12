@@ -52,15 +52,14 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 7.0), 0.1)),
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
-        Box::new(object::Quad::new(&ds::Vector3::new(-10.0, -2.0, -10.0), &ds::Vector3::new(20.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 20.0))),
 
         Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
 
-        // Box::new(object::Sphere::new(&ds::Vector3::new(-0.75, -0.8, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&ds::Vector3::new(0.75, -0.8, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 1.0, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 2.0, 5.0), 0.5))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-0.75, -0.8, -5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.75, -0.8, -5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, -5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 1.0, -5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 2.0, -5.0), 0.5))
     ];
 
     // let sphere = object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5);
@@ -93,44 +92,41 @@ fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Rende
         
         let elapsed = start.elapsed();
         print!("\x1B[2J\x1B[1;1H");
-        println!("\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", elapsed.as_millis(), player.get_camera().pos(), player.get_rotation());
-        
-        if elapsed.as_millis() < (1000.0/60.0) as u128 {
-            println!("\n\n Sleeping for {}ms", (1000.0/60.0) as u64 - elapsed.as_millis() as u64);
-            std::thread::sleep(std::time::Duration::from_millis((1000.0/60.0) as u64 - elapsed.as_millis() as u64));
-        }
+        println!("\n\n FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", 1000/elapsed.as_millis(), elapsed.as_millis(), player.get_camera().pos(), player.get_rotation());
+
+        let deltatime: f64 = (elapsed.as_millis() as f64) / 1000.0;
 
         if window.is_key_down(Key::W) {
-            player.move_player(&ds::Vector3::new(0.0, 0.0, 0.05));
+            player.move_player(&(ds::Vector3::new( 0.0,  0.0,  1.0) * deltatime));
         }
         if window.is_key_down(Key::S) {
-            player.move_player(&ds::Vector3::new(0.0, 0.0, -0.05));
+            player.move_player(&(ds::Vector3::new( 0.0,  0.0, -1.0) * deltatime));
         }
         if window.is_key_down(Key::A) {
-            player.move_player(&ds::Vector3::new(-0.05, 0.0, 0.0));
+            player.move_player(&(ds::Vector3::new(-1.0,  0.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::D) {
-            player.move_player(&ds::Vector3::new(0.05, 0.0, 0.0));
+            player.move_player(&(ds::Vector3::new( 1.0,  0.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::Space) {
-            player.move_player(&ds::Vector3::new(0.0, 0.05, 0.0));
+            player.move_player(&(ds::Vector3::new( 0.0,  1.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::LeftCtrl) {
-            player.move_player(&ds::Vector3::new(0.0, -0.05, 0.0));
+            player.move_player(&(ds::Vector3::new( 0.0, -1.0,  0.0) * deltatime));
         }
 
         if window.is_key_down(Key::Left) {
-            player.change_rotation(ds::Vector3::new(0.0, 0.0, -0.025));
+            player.change_rotation(ds::Vector3::new( 0.0, 0.0, -0.5) * deltatime);
         }
         if window.is_key_down(Key::Right) {
-            player.change_rotation(ds::Vector3::new(0.0, 0.0, 0.025));
+            player.change_rotation(ds::Vector3::new( 0.0, 0.0,  0.5) * deltatime);
         }
 
         if window.is_key_down(Key::Up) {
-            player.change_rotation(ds::Vector3::new(0.025, 0.0, 0.0));
+            player.change_rotation(ds::Vector3::new( 0.5, 0.0,  0.0) * deltatime);
         }
         if window.is_key_down(Key::Down) {
-            player.change_rotation(ds::Vector3::new(-0.025, 0.0, 0.0));
+            player.change_rotation(ds::Vector3::new(-0.5, 0.0,  0.0) * deltatime);
         }
     }
 }
