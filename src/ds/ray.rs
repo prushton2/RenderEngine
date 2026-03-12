@@ -1,4 +1,4 @@
-use crate::position::Vector3;
+use crate::ds::Vector3;
 use auto_ops::*;
 
 #[derive(PartialEq, Copy, Clone)]

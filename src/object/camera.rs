@@ -1,28 +1,28 @@
-use crate::position;
+use crate::ds;
 
 pub struct Camera {
     // inputs
-    pos: position::Vector3,
-    dir: position::Vector3,
-    up:  position::Vector3,
+    pos: ds::Vector3,
+    dir: ds::Vector3,
+    up:  ds::Vector3,
 
     window_dimensions: (f64, f64),
     focal_length: f64,
     vfov: f64,
     
     // outputs
-    pixel_delta_w: position::Vector3,
-    pixel_delta_h: position::Vector3,
-    pixel00_loc: position::Vector3,
+    pixel_delta_w: ds::Vector3,
+    pixel_delta_h: ds::Vector3,
+    pixel00_loc: ds::Vector3,
 }
 
 impl Camera {
-    pub fn new(pos: position::Vector3, focal_length: f64, window_dimensions: (f64, f64), vfov: f64) -> Self{
+    pub fn new(pos: ds::Vector3, focal_length: f64, window_dimensions: (f64, f64), vfov: f64) -> Self{
 
-        // let angle: f64 = 0.5 * position::math::PI;
-        // let lookat = position::Vector3::new(angle.cos() * focal_length, 0.0, angle.sin() * focal_length);
-        let lookat = position::Vector3::new(0.0, 0.0, focal_length);
-        let up = position::Vector3::new(0.0, 1.0, 0.0);
+        // let angle: f64 = 0.5 * ds::math::PI;
+        // let lookat = ds::Vector3::new(angle.cos() * focal_length, 0.0, angle.sin() * focal_length);
+        let lookat = ds::Vector3::new(0.0, 0.0, focal_length);
+        let up = ds::Vector3::new(0.0, 1.0, 0.0);
 
         let mut this = Self {
             pos: pos,
@@ -32,9 +32,9 @@ impl Camera {
             focal_length: 0.0,
             vfov: vfov,
 
-            pixel_delta_h: position::Vector3::zero(),
-            pixel_delta_w: position::Vector3::zero(),
-            pixel00_loc: position::Vector3::zero(),
+            pixel_delta_h: ds::Vector3::zero(),
+            pixel_delta_w: ds::Vector3::zero(),
+            pixel00_loc: ds::Vector3::zero(),
         };
 
         Self::update_outputs(&mut this);
@@ -46,7 +46,7 @@ impl Camera {
         self.focal_length = (self.dir - self.pos).length();
 
         // man idk what this does
-        let theta = position::math::degrees_to_radians(self.vfov);
+        let theta = ds::math::degrees_to_radians(self.vfov);
         let h = (theta/2.0).tan();
 
         // viewport math (i understand all of this aside from h)
@@ -73,43 +73,43 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
     }
 
-    pub fn set_pos(&mut self, pos: position::Vector3) {
+    pub fn set_pos(&mut self, pos: ds::Vector3) {
         self.pos = pos;
         let delta_dir = self.dir - self.pos;
         self.dir = pos;
         self.update_outputs();
     }
 
-    pub fn move_camera(&mut self, delta: position::Vector3) {
+    pub fn move_camera(&mut self, delta: ds::Vector3) {
         self.pos = self.pos + delta;
         self.dir = self.dir + delta;
         self.update_outputs();
     }
 
-    pub fn set_dir_absolute(&mut self, pos: position::Vector3) {
+    pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
         self.dir = pos;
         self.update_outputs();
     }
     
-    pub fn set_dir_relative(&mut self, dir: position::Vector3) {
+    pub fn set_dir_relative(&mut self, dir: ds::Vector3) {
         self.dir = self.pos + (dir * self.focal_length);
         self.update_outputs();
     }
 
-    pub fn pixel_delta_w(&self) -> position::Vector3 {
+    pub fn pixel_delta_w(&self) -> ds::Vector3 {
         return self.pixel_delta_w;
     }
-    pub fn pixel_delta_h(&self) -> position::Vector3 {
+    pub fn pixel_delta_h(&self) -> ds::Vector3 {
         return self.pixel_delta_h;
     }
-    pub fn pixel00_loc(&self) -> position::Vector3 {
+    pub fn pixel00_loc(&self) -> ds::Vector3 {
         return self.pixel00_loc;
     }
 
-    pub fn pos(&self) -> position::Vector3 {
+    pub fn pos(&self) -> ds::Vector3 {
         return self.pos;
     }
-    pub fn dir_absolute(&self) -> position::Vector3 {
+    pub fn dir_absolute(&self) -> ds::Vector3 {
         return self.dir;
     }
 

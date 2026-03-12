@@ -1,7 +1,7 @@
 use minifb::{Key, Window, WindowOptions};
 use crate::object::renderable::Renderable;
 
-mod position;
+mod ds;
 mod object;
 
 const WIDTH: usize = 1280; //Resolution
@@ -10,10 +10,10 @@ const HEIGHT: usize = 720;
 fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Renderable>>, x: f64, y: f64) -> u32 {
     let pixel_center = camera.pixel00_loc() + (x * camera.pixel_delta_w()) + (y * camera.pixel_delta_h());
     let ray_direction = pixel_center - camera.pos();
-    let ray = position::Ray::new(&camera.pos(), &ray_direction);
+    let ray = ds::Ray::new(&camera.pos(), &ray_direction);
 
     let mut lowest_distance: Option<f64> = None;
-    let mut color = 0x00000088;
+    let mut color = 0x00333333;
 
     for object in objects {
         let intersects = object.intersects(&ray);
@@ -38,7 +38,7 @@ fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Render
 
 fn main() {
     let camera = object::Camera::new(
-        position::Vector3::new(0.0, 0.0, 0.0),
+        ds::Vector3::new(0.0, 0.0, 0.0),
         3.0,
         (WIDTH as f64, HEIGHT as f64),
         60.0
@@ -49,17 +49,17 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn object::Renderable>> = vec![
-        Box::new(object::Sphere::new(&position::Vector3::new(0.0, 0.0, 7.0), 0.1)),
-        Box::new(object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5)),
-        Box::new(object::Sphere::new(&position::Vector3::new(-2.0, -0.4, 5.0), 0.1))
-        // Box::new(object::Sphere::new(&position::Vector3::new(-0.75, 0.2, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&position::Vector3::new(0.75, 0.2, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 1.0, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 2.0, 5.0), 0.5)),
-        // Box::new(object::Sphere::new(&position::Vector3::new(0.0, 3.0, 5.0), 0.5))
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 7.0), 0.1)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1))
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-0.75, -0.8, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(0.75, -0.8, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 1.0, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 2.0, 5.0), 0.5))
     ];
 
-    // let sphere = object::Sphere::new(&position::Vector3::new(0.0, 0.0, 5.0), 0.5);
+    // let sphere = object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5);
 
     minifbwindow(&mut player, &objects);
 }
@@ -97,36 +97,36 @@ fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Rende
         }
 
         if window.is_key_down(Key::W) {
-            player.move_player(&position::Vector3::new(0.0, 0.0, 0.05));
+            player.move_player(&ds::Vector3::new(0.0, 0.0, 0.05));
         }
         if window.is_key_down(Key::S) {
-            player.move_player(&position::Vector3::new(0.0, 0.0, -0.05));
+            player.move_player(&ds::Vector3::new(0.0, 0.0, -0.05));
         }
         if window.is_key_down(Key::A) {
-            player.move_player(&position::Vector3::new(-0.05, 0.0, 0.0));
+            player.move_player(&ds::Vector3::new(-0.05, 0.0, 0.0));
         }
         if window.is_key_down(Key::D) {
-            player.move_player(&position::Vector3::new(0.05, 0.0, 0.0));
+            player.move_player(&ds::Vector3::new(0.05, 0.0, 0.0));
         }
         if window.is_key_down(Key::Space) {
-            player.move_player(&position::Vector3::new(0.0, 0.05, 0.0));
+            player.move_player(&ds::Vector3::new(0.0, 0.05, 0.0));
         }
         if window.is_key_down(Key::LeftCtrl) {
-            player.move_player(&position::Vector3::new(0.0, -0.05, 0.0));
+            player.move_player(&ds::Vector3::new(0.0, -0.05, 0.0));
         }
 
         if window.is_key_down(Key::Left) {
-            player.change_rotation(position::Vector3::new(0.0, 0.0, -0.025));
+            player.change_rotation(ds::Vector3::new(0.0, 0.0, -0.025));
         }
         if window.is_key_down(Key::Right) {
-            player.change_rotation(position::Vector3::new(0.0, 0.0, 0.025));
+            player.change_rotation(ds::Vector3::new(0.0, 0.0, 0.025));
         }
 
         if window.is_key_down(Key::Up) {
-            player.change_rotation(position::Vector3::new(0.025, 0.0, 0.0));
+            player.change_rotation(ds::Vector3::new(0.025, 0.0, 0.0));
         }
         if window.is_key_down(Key::Down) {
-            player.change_rotation(position::Vector3::new(-0.025, 0.0, 0.0));
+            player.change_rotation(ds::Vector3::new(-0.025, 0.0, 0.0));
         }
     }
 }
