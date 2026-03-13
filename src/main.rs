@@ -1,4 +1,5 @@
 use std::thread;
+use std::sync::{Arc, RwLock};
 use minifb::{Key, Window, WindowOptions};
 use crate::object::renderable::Renderable;
 
@@ -49,7 +50,7 @@ fn main() {
         camera
     );
 
-    let mut objects: Vec<Box<dyn object::Renderable + Send + Sync>> = vec![
+    let objects: Vec<Box<dyn object::Renderable + Send + Sync>> = vec![
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 7.0), 0.1)),
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
@@ -63,16 +64,12 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 2.0, -5.0), 0.5))
     ];
 
-    if false {
-        for _i in 0..100 {
-            objects.push(Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)));
-        }
-    }
+    // let sphere = object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5);
 
-    minifbwindow(&mut player, &objects);
+    minifbwindow(player, objects);
 }
 
-fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Renderable + Send + Sync>>) {
+fn minifbwindow(player: object::Player, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     let mut window = Window::new(
         "Render Engine",
@@ -85,87 +82,82 @@ fn minifbwindow(player: &mut object::Player, objects: &Vec<Box<dyn object::Rende
         }
     ).unwrap();
 
+    let thread_count = 4;
+    let player = Arc::new(RwLock::new(player));
+    let objects = Arc::new(objects);
+    
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        // format is 0x00RRGGBB
         let start = std::time::Instant::now();
 
-        player.update_outputs();
+        let mut threads = vec![];
 
-        let mut pixel_buffer_0: [[u32; WIDTH]; HEIGHT] = [[0; WIDTH]; HEIGHT];
-        let mut pixel_buffer_1: [[u32; WIDTH]; HEIGHT] = [[0; WIDTH]; HEIGHT];
-        let mut pixel_buffer_2: [[u32; WIDTH]; HEIGHT] = [[0; WIDTH]; HEIGHT];
-        let mut pixel_buffer_3: [[u32; WIDTH]; HEIGHT] = [[0; WIDTH]; HEIGHT];
+        for i in 0..thread_count {
+            let player_ref = Arc::clone(&player);
+            let objects_ref = Arc::clone(&objects);
 
-        let thread0 = thread::spawn(|| {render_thread(&player, objects, 0, 4, &mut pixel_buffer_0)});
-        let thread1 = thread::spawn(|| {render_thread(&player, objects, 1, 4, &mut pixel_buffer_1)});
-        let thread2 = thread::spawn(|| {render_thread(&player, objects, 2, 4, &mut pixel_buffer_2)});
-        let thread3 = thread::spawn(|| {render_thread(&player, objects, 3, 4, &mut pixel_buffer_3)});
+            threads.push(thread::spawn(move || {
+                let mut pixels: Vec<u32> = vec![0; WIDTH * HEIGHT/thread_count];
 
-        thread0.join();
-        thread1.join();
-        thread2.join();
-        thread3.join();
-
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                // buffer[y * WIDTH + x] = get_pixel_color(player.get_camera(), &objects, x as f64, y as f64);
-                buffer[y * WIDTH + x] = match (y * WIDTH + x)%4 {
-                    0 => pixel_buffer_0[x][y],
-                    1 => pixel_buffer_1[x][y],
-                    2 => pixel_buffer_2[x][y],
-                    3 => pixel_buffer_3[x][y],
-                    _ => {0}
+                for x in 0..WIDTH { //(WIDTH/thread_count)*i..(WIDTH/thread_count)*(i+1) {
+                    for y in ((HEIGHT/thread_count)*i)..(HEIGHT/thread_count)*(i+1) {
+                        pixels[(y - (HEIGHT/thread_count)*i) * WIDTH + x] = get_pixel_color(player_ref.read().unwrap().get_camera(), objects_ref.as_ref(), x as f64, y as f64)
+                    }
                 }
-            }
+
+                pixels
+            }));
+        }
+        
+        let mut pixels: Vec<u32> = vec![];
+
+        for thread in threads.drain(0..threads.len()) {
+            pixels.extend(thread.join().unwrap());
         }
 
+        buffer = pixels;
         
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+
+        let mut player_mut = player.write().unwrap();
+        
         let elapsed = start.elapsed();
         print!("\x1B[2J\x1B[1;1H");
-        println!("\n\n FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", 1000/elapsed.as_millis(), elapsed.as_millis(), player.get_camera().pos(), player.get_rotation());
+        println!("\n\n FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", 1000/elapsed.as_millis(), elapsed.as_millis(), player_mut.get_camera().pos(), player_mut.get_rotation());
 
         let deltatime: f64 = (elapsed.as_millis() as f64) / 1000.0;
 
         if window.is_key_down(Key::W) {
-            player.move_player(&(ds::Vector3::new( 0.0,  0.0,  1.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new( 0.0,  0.0,  1.0) * deltatime));
         }
         if window.is_key_down(Key::S) {
-            player.move_player(&(ds::Vector3::new( 0.0,  0.0, -1.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new( 0.0,  0.0, -1.0) * deltatime));
         }
         if window.is_key_down(Key::A) {
-            player.move_player(&(ds::Vector3::new(-1.0,  0.0,  0.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new(-1.0,  0.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::D) {
-            player.move_player(&(ds::Vector3::new( 1.0,  0.0,  0.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new( 1.0,  0.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::Space) {
-            player.move_player(&(ds::Vector3::new( 0.0,  1.0,  0.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new( 0.0,  1.0,  0.0) * deltatime));
         }
         if window.is_key_down(Key::LeftCtrl) {
-            player.move_player(&(ds::Vector3::new( 0.0, -1.0,  0.0) * deltatime));
+            player_mut.move_player(&(ds::Vector3::new( 0.0, -1.0,  0.0) * deltatime));
         }
 
         if window.is_key_down(Key::Left) {
-            player.change_rotation(ds::Vector3::new( 0.0, 0.0, -0.5) * deltatime);
+            player_mut.change_rotation(ds::Vector3::new( 0.0, 0.0, -0.5) * deltatime);
         }
         if window.is_key_down(Key::Right) {
-            player.change_rotation(ds::Vector3::new( 0.0, 0.0,  0.5) * deltatime);
+            player_mut.change_rotation(ds::Vector3::new( 0.0, 0.0,  0.5) * deltatime);
         }
 
         if window.is_key_down(Key::Up) {
-            player.change_rotation(ds::Vector3::new( 0.5, 0.0,  0.0) * deltatime);
+            player_mut.change_rotation(ds::Vector3::new( 0.5, 0.0,  0.0) * deltatime);
         }
         if window.is_key_down(Key::Down) {
-            player.change_rotation(ds::Vector3::new(-0.5, 0.0,  0.0) * deltatime);
+            player_mut.change_rotation(ds::Vector3::new(-0.5, 0.0,  0.0) * deltatime);
         }
-    }
-}
-
-fn render_thread(player: &object::Player, objects: &Vec<Box<dyn object::Renderable + Send + Sync>>, offset: usize, thread_count: usize, buffer: &mut [[u32; WIDTH]; HEIGHT]) {
-    for y in 0..HEIGHT/thread_count {
-        for x in 0..WIDTH/thread_count {
-            buffer[x][y] = get_pixel_color(player.get_camera(), &objects, (offset + x*thread_count) as f64, (y*thread_count) as f64);
-        }
+        player_mut.update_outputs();
     }
 }
