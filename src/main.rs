@@ -96,7 +96,7 @@ impl ApplicationHandler for App {
             event_loop
                 .create_window(
                     Window::default_attributes()
-                        .with_title("Hello, winit!")
+                        .with_title("Render Engine")
                         .with_inner_size(winit::dpi::LogicalSize::new(WIDTH as f64, HEIGHT as f64)),
                 )
                 .expect("Failed to create window"),
@@ -188,6 +188,11 @@ impl ApplicationHandler for App {
                 buf.copy_from_slice(&pixels);
 
                 buf.present().expect("Failed to present buffer");
+
+                let player_mut = self.player.read().unwrap();
+
+                print!("\x1B[2J\x1B[1;1H");
+                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", (1.0/self.deltatime) as u32, self.deltatime*1000.0, player_mut.get_camera().pos(), player_mut.get_rotation());
             }
 
             WindowEvent::Resized(_) => {
