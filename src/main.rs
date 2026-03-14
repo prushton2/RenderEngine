@@ -1,11 +1,13 @@
 use std::num::NonZeroU32;
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use softbuffer::{Context, Surface};
 use winit::application::ApplicationHandler;
-use winit::event::WindowEvent;
+use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowId};
+use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::object::Renderable;
 
@@ -20,7 +22,11 @@ struct App {
     surface: Option<Surface<Rc<Window>, Rc<Window>>>,
     context: Option<Context<Rc<Window>>>,
     player: object::Player,
-    objects: Vec<Box<dyn object::Renderable + Send + Sync>>
+    objects: Vec<Box<dyn object::Renderable + Send + Sync>>,
+    keyboard: HashMap<KeyCode, bool>,
+    
+    last_frame: std::time::Instant,
+    deltatime: f64,
 }
 
 impl App {
@@ -30,6 +36,38 @@ impl App {
 
     pub fn consume_objects(&mut self, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
         self.objects = objects;
+    }
+
+    pub fn handle_movement(&mut self) {
+        let key_movements: &[(KeyCode, ds::Vector3)] = &[
+            (KeyCode::KeyW,      ds::Vector3::new( 0.0,  0.0,  1.0)),
+            (KeyCode::KeyS,      ds::Vector3::new( 0.0,  0.0, -1.0)),
+            (KeyCode::KeyA,      ds::Vector3::new(-1.0,  0.0,  0.0)),
+            (KeyCode::KeyD,      ds::Vector3::new( 1.0,  0.0,  0.0)),
+            (KeyCode::Space,     ds::Vector3::new( 0.0,  1.0,  0.0)),
+            (KeyCode::ControlLeft, ds::Vector3::new( 0.0, -1.0,  0.0)),
+        ];
+
+        let key_rotations: &[(KeyCode, ds::Vector3)] = &[
+            (KeyCode::ArrowLeft,  ds::Vector3::new( 0.0,  0.0, -0.5)),
+            (KeyCode::ArrowRight, ds::Vector3::new( 0.0,  0.0,  0.5)),
+            (KeyCode::ArrowUp,    ds::Vector3::new( 0.5,  0.0,  0.0)),
+            (KeyCode::ArrowDown,  ds::Vector3::new(-0.5,  0.0,  0.0)),
+        ];
+
+        for (key, dir) in key_movements {
+            if self.keyboard.get(key) == Some(&true) {
+                self.player.move_player(&(dir * self.deltatime));
+            }
+        }
+
+        for (key, dir) in key_rotations {
+            if self.keyboard.get(key) == Some(&true) {
+                self.player.change_rotation(dir * self.deltatime);
+            }
+        }
+
+        self.player.update_outputs();
     }
 }
 
@@ -41,6 +79,9 @@ impl Default for App {
             context: None,
             player: object::Player::new(object::Camera::zero()),
             objects: vec![],
+            keyboard: [].into(),
+            last_frame: std::time::Instant::now(),
+            deltatime: 0.0
         }
     }
 }
@@ -65,6 +106,12 @@ impl ApplicationHandler for App {
         self.window = Some(window);
     }
 
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        if let Some(window) = &self.window {
+            window.request_redraw();
+        }
+    }
+
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -77,10 +124,15 @@ impl ApplicationHandler for App {
             }
 
             WindowEvent::RedrawRequested => {
+                self.deltatime = self.last_frame.elapsed().as_millis() as f64 / 1000.0;
+                self.last_frame = std::time::Instant::now();
+
                 if self.surface.is_none() || self.window.is_none() {
                     return;
                 }
-
+                
+                self.handle_movement();
+                
                 let window = self.window.as_ref().unwrap();
                 let surface = self.surface.as_mut().unwrap();
 
@@ -97,8 +149,9 @@ impl ApplicationHandler for App {
                     Some(t) => t,
                     None => return
                 };
-                surface.resize(w, h).expect("Failed to resize surface");
 
+                surface.resize(w, h).expect("Failed to resize surface");
+                
                 let mut buf = surface.buffer_mut().expect("Failed to get buffer");
                 
                 for x in 0..width {
@@ -107,14 +160,30 @@ impl ApplicationHandler for App {
                     }
                 }
 
-
                 buf.present().expect("Failed to present buffer");
-                
             }
 
             WindowEvent::Resized(_) => {
                 if let Some(window) = &self.window {
                     window.request_redraw();
+                }
+            }
+
+            WindowEvent::KeyboardInput{
+                event: KeyEvent {
+                    physical_key: PhysicalKey::Code(keycode),
+                    state,
+                    ..
+                },
+                ..
+            } => {
+                match (keycode, state) {
+                    // special functions
+                    (KeyCode::Escape, ElementState::Pressed) => event_loop.exit(),
+                    (keycode, pressed) => {
+                        // everything else is mapped to the keyboard hashmap
+                        self.keyboard.insert(keycode, pressed == ElementState::Pressed);
+                    }
                 }
             }
 
