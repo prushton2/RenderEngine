@@ -122,6 +122,14 @@ impl Camera {
         self.dirty = true;
     }
 
+    pub fn set_window_size(&mut self, width: f64, height: f64) {
+        if (width, height) != self.window_dimensions {
+            self.window_dimensions = (width as f64, height as f64);
+            self.dirty = true;
+            self.update_outputs();
+        }
+    }
+
     pub fn pixel_delta_w(&self) -> ds::Vector3 {
         return self.pixel_delta_w;
     }

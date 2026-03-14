@@ -134,27 +134,30 @@ impl ApplicationHandler for App {
                 if self.surface.is_none() || self.window.is_none() {
                     return;
                 }
-                
-                self.handle_movement();
-                
+                                
                 let window = self.window.as_ref().unwrap();
-                let surface = self.surface.as_mut().unwrap();
-
                 let size = window.inner_size();
-                let width = size.width;
-                let height = size.height;
-
-                let w = match NonZeroU32::new(width) {
+                
+                let width_nzu32 = match NonZeroU32::new(size.width) {
                     Some(t) => t,
                     None => return
                 };
-
-                let h = match NonZeroU32::new(height) {
+                
+                let height_nzu32 = match NonZeroU32::new(size.height) {
                     Some(t) => t,
                     None => return
+
                 };
 
-                surface.resize(w, h).expect("Failed to resize surface");
+                let width: usize = size.width as usize;
+                let height: usize = size.height as usize;
+                
+                self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
+                self.handle_movement();
+
+                
+                let surface = self.surface.as_mut().unwrap();
+                surface.resize(width_nzu32, height_nzu32).expect("Failed to resize surface");
                 
                 let mut buf = surface.buffer_mut().expect("Failed to get buffer");
                 
@@ -166,12 +169,20 @@ impl ApplicationHandler for App {
                     let objects_ref = Arc::clone(&self.objects);
 
                     threads.push(thread::spawn(move || {
-                        let mut pixels: Vec<u32> = vec![0; WIDTH * HEIGHT/thread_count];
+                        let strip_start = (height / thread_count) * i;
+                        let strip_end = if i == thread_count - 1 {
+                            height  // last thread takes any leftover rows
+                        } else {
+                            (height / thread_count) * (i + 1)
+                        };
+                        let strip_height = strip_end - strip_start;
+
+                        let mut pixels: Vec<u32> = vec![0; width * strip_height];
                         let player_read = player_ref.read().unwrap();
 
-                        for x in 0..WIDTH {
-                            for y in ((HEIGHT/thread_count)*i)..(HEIGHT/thread_count)*(i+1) {
-                                pixels[(y - (HEIGHT/thread_count)*i) * WIDTH + x] = get_pixel_color(player_read.get_camera(), objects_ref.as_ref(), x as f64, y as f64)
+                        for x in 0..width {
+                            for y in strip_start..strip_end {
+                                pixels[(y - strip_start) * width + x] = get_pixel_color(player_read.get_camera(), objects_ref.as_ref(), x as f64, y as f64);
                             }
                         }
 
@@ -179,7 +190,7 @@ impl ApplicationHandler for App {
                     }));
                 }
 
-                let mut pixels: Vec<u32> = Vec::with_capacity(WIDTH*HEIGHT);
+                let mut pixels: Vec<u32> = Vec::with_capacity(width*height);
 
                 for thread in threads.drain(0..threads.len()) {
                     pixels.extend(thread.join().unwrap());

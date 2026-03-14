@@ -52,6 +52,10 @@ impl Player {
         &self.camera
     }
 
+    pub fn get_camera_mut(&mut self) -> &mut object::Camera {
+        &mut self.camera
+    }
+
     pub fn update_outputs(&mut self) {
         self.camera.update_outputs();
     }
