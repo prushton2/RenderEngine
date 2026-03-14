@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use std::num::NonZeroU32;
 use std::rc::Rc;
-use std::collections::HashMap;
+use std::thread;
+use std::sync::{Arc, RwLock};
 
 use softbuffer::{Context, Surface};
 use winit::application::ApplicationHandler;
@@ -21,24 +23,26 @@ struct App {
     window: Option<Rc<Window>>,
     surface: Option<Surface<Rc<Window>, Rc<Window>>>,
     context: Option<Context<Rc<Window>>>,
-    player: object::Player,
-    objects: Vec<Box<dyn object::Renderable + Send + Sync>>,
-    keyboard: HashMap<KeyCode, bool>,
+
+    player: Arc<RwLock<object::Player>>,
+    objects: Arc<Vec<Box<dyn object::Renderable + Send + Sync>>>,
     
+    keyboard: HashMap<KeyCode, bool>,
     last_frame: std::time::Instant,
     deltatime: f64,
 }
 
 impl App {
     pub fn consume_player(&mut self, player: object::Player) {
-        self.player = player;
+        self.player = Arc::new(RwLock::new(player));
     }
 
     pub fn consume_objects(&mut self, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
-        self.objects = objects;
+        self.objects = Arc::new(objects);
     }
 
     pub fn handle_movement(&mut self) {
+        let mut player_ref = self.player.write().unwrap();
         let key_movements: &[(KeyCode, ds::Vector3)] = &[
             (KeyCode::KeyW,      ds::Vector3::new( 0.0,  0.0,  1.0)),
             (KeyCode::KeyS,      ds::Vector3::new( 0.0,  0.0, -1.0)),
@@ -57,17 +61,17 @@ impl App {
 
         for (key, dir) in key_movements {
             if self.keyboard.get(key) == Some(&true) {
-                self.player.move_player(&(dir * self.deltatime));
+                player_ref.move_player(&(dir * self.deltatime));
             }
         }
 
         for (key, dir) in key_rotations {
             if self.keyboard.get(key) == Some(&true) {
-                self.player.change_rotation(dir * self.deltatime);
+                player_ref.change_rotation(dir * self.deltatime);
             }
         }
 
-        self.player.update_outputs();
+        player_ref.update_outputs();
     }
 }
 
@@ -77,8 +81,8 @@ impl Default for App {
             window: None,
             surface: None,
             context: None,
-            player: object::Player::new(object::Camera::zero()),
-            objects: vec![],
+            player: Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
+            objects: vec![].into(),
             keyboard: [].into(),
             last_frame: std::time::Instant::now(),
             deltatime: 0.0
@@ -154,11 +158,34 @@ impl ApplicationHandler for App {
                 
                 let mut buf = surface.buffer_mut().expect("Failed to get buffer");
                 
-                for x in 0..width {
-                    for y in 0..height {
-                        buf[(y * width + x) as usize] = get_pixel_color(&self.player.get_camera(), &self.objects, x as f64, y as f64);
-                    }
+                let thread_count = 8;
+                let mut threads = vec![];
+
+                for i in 0..thread_count {
+                    let player_ref = Arc::clone(&self.player);
+                    let objects_ref = Arc::clone(&self.objects);
+
+                    threads.push(thread::spawn(move || {
+                        let mut pixels: Vec<u32> = vec![0; WIDTH * HEIGHT/thread_count];
+                        let player_read = player_ref.read().unwrap();
+
+                        for x in 0..WIDTH {
+                            for y in ((HEIGHT/thread_count)*i)..(HEIGHT/thread_count)*(i+1) {
+                                pixels[(y - (HEIGHT/thread_count)*i) * WIDTH + x] = get_pixel_color(player_read.get_camera(), objects_ref.as_ref(), x as f64, y as f64)
+                            }
+                        }
+
+                        pixels
+                    }));
                 }
+
+                let mut pixels: Vec<u32> = Vec::with_capacity(WIDTH*HEIGHT);
+
+                for thread in threads.drain(0..threads.len()) {
+                    pixels.extend(thread.join().unwrap());
+                }
+
+                buf.copy_from_slice(&pixels);
 
                 buf.present().expect("Failed to present buffer");
             }
