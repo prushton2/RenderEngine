@@ -18,6 +18,24 @@ pub struct Camera {
 }
 
 impl Camera {
+    pub fn zero() -> Self { // irreedeemable
+        Self {
+            pos: ds::Vector3::zero(),
+            dir: ds::Vector3::zero(),
+            up: ds::Vector3::zero(),
+            dirty: true,
+
+            window_dimensions: (0.0, 0.0),
+            focal_length: 0.0,
+            vfov: 0.0,
+
+            pixel_delta_h: ds::Vector3::zero(),
+            pixel_delta_w: ds::Vector3::zero(),
+            pixel00_loc: ds::Vector3::zero(),
+        }
+
+    }
+
     pub fn new(pos: ds::Vector3, focal_length: f64, window_dimensions: (f64, f64), vfov: f64) -> Self{
 
         // let angle: f64 = 0.5 * ds::math::PI;

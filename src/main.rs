@@ -1,14 +1,127 @@
-use std::thread;
-use std::sync::{Arc, RwLock};
-use std::collections::VecDeque;
-use minifb::{Key, Window, WindowOptions};
-use crate::object::renderable::Renderable;
+use std::num::NonZeroU32;
+use std::rc::Rc;
 
-mod ds;
+use softbuffer::{Context, Surface};
+use winit::application::ApplicationHandler;
+use winit::event::WindowEvent;
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::window::{Window, WindowId};
+
+use crate::object::Renderable;
+
 mod object;
+mod ds;
 
-const WIDTH: usize = 1280; //Resolution
+const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
+
+struct App {
+    window: Option<Rc<Window>>,
+    surface: Option<Surface<Rc<Window>, Rc<Window>>>,
+    context: Option<Context<Rc<Window>>>,
+    player: object::Player,
+    objects: Vec<Box<dyn object::Renderable + Send + Sync>>
+}
+
+impl App {
+    pub fn consume_player(&mut self, player: object::Player) {
+        self.player = player;
+    }
+
+    pub fn consume_objects(&mut self, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
+        self.objects = objects;
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            window: None,
+            surface: None,
+            context: None,
+            player: object::Player::new(object::Camera::zero()),
+            objects: vec![],
+        }
+    }
+}
+
+impl ApplicationHandler for App {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        let window = Rc::new(
+            event_loop
+                .create_window(
+                    Window::default_attributes()
+                        .with_title("Hello, winit!")
+                        .with_inner_size(winit::dpi::LogicalSize::new(WIDTH as f64, HEIGHT as f64)),
+                )
+                .expect("Failed to create window"),
+        );
+
+        let context = Context::new(window.clone()).expect("Failed to create softbuffer context");
+        let surface = Surface::new(&context, window.clone()).expect("Failed to create surface");
+
+        self.context = Some(context);
+        self.surface = Some(surface);
+        self.window = Some(window);
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+
+            WindowEvent::RedrawRequested => {
+                if self.surface.is_none() || self.window.is_none() {
+                    return;
+                }
+
+                let window = self.window.as_ref().unwrap();
+                let surface = self.surface.as_mut().unwrap();
+
+                let size = window.inner_size();
+                let width = size.width;
+                let height = size.height;
+
+                let w = match NonZeroU32::new(width) {
+                    Some(t) => t,
+                    None => return
+                };
+
+                let h = match NonZeroU32::new(height) {
+                    Some(t) => t,
+                    None => return
+                };
+                surface.resize(w, h).expect("Failed to resize surface");
+
+                let mut buf = surface.buffer_mut().expect("Failed to get buffer");
+                
+                for x in 0..width {
+                    for y in 0..height {
+                        buf[(y * width + x) as usize] = get_pixel_color(&self.player.get_camera(), &self.objects, x as f64, y as f64);
+                    }
+                }
+
+
+                buf.present().expect("Failed to present buffer");
+                
+            }
+
+            WindowEvent::Resized(_) => {
+                if let Some(window) = &self.window {
+                    window.request_redraw();
+                }
+            }
+
+            _ => {}
+        }
+    }
+}
 
 fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
     let pixel_center = camera.pixel00_loc() + (x * camera.pixel_delta_w()) + (y * camera.pixel_delta_h());
@@ -47,7 +160,7 @@ fn main() {
         60.0
     );
 
-    let mut player = object::Player::new(
+    let player = object::Player::new(
         camera
     );
 
@@ -65,101 +178,13 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5))
     ];
 
-    let mut window = Window::new(
-        "Render Engine",
-        WIDTH, HEIGHT,
-        WindowOptions {
-            borderless: false,
-            title: true,
-            resize: true,
-        ..WindowOptions::default()
-        }
-    ).unwrap();
+    let event_loop = EventLoop::new().expect("Failed to create event loop");
+    event_loop.set_control_flow(ControlFlow::Wait);
 
-    let thread_count = 8;
-    let player = Arc::new(RwLock::new(player));
-    let objects = Arc::new(objects);
-    let mut deltatime = 0.0;
-    let mut ms_until_fps_update: i64 = 1000;
-    let mut fps: u128 = 0;
+    let mut app = App::default();
+    app.consume_player(player);
+    app.consume_objects(objects);
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        let start = std::time::Instant::now();
-
-        let mut threads = vec![];
-
-        for i in 0..thread_count {
-            let player_ref = Arc::clone(&player);
-            let objects_ref = Arc::clone(&objects);
-
-            threads.push(thread::spawn(move || {
-                let mut pixels: Vec<u32> = vec![0; WIDTH * HEIGHT/thread_count];
-                let player_read = player_ref.read().unwrap();
-
-                for x in 0..WIDTH {
-                    for y in ((HEIGHT/thread_count)*i)..(HEIGHT/thread_count)*(i+1) {
-                        pixels[(y - (HEIGHT/thread_count)*i) * WIDTH + x] = get_pixel_color(player_read.get_camera(), objects_ref.as_ref(), x as f64, y as f64)
-                    }
-                }
-
-                pixels
-            }));
-        }
-
-        let mut pixels: Vec<u32> = Vec::with_capacity(WIDTH*HEIGHT);
-
-        for thread in threads.drain(0..threads.len()) {
-            pixels.extend(thread.join().unwrap());
-        }
-
-        window.update_with_buffer(&pixels, WIDTH, HEIGHT).unwrap();
-
-        let mut player_mut = player.write().unwrap();
-
-        if window.is_key_down(Key::W) {
-            player_mut.move_player(&(ds::Vector3::new( 0.0,  0.0,  1.0) * deltatime));
-        }
-        if window.is_key_down(Key::S) {
-            player_mut.move_player(&(ds::Vector3::new( 0.0,  0.0, -1.0) * deltatime));
-        }
-        if window.is_key_down(Key::A) {
-            player_mut.move_player(&(ds::Vector3::new(-1.0,  0.0,  0.0) * deltatime));
-        }
-        if window.is_key_down(Key::D) {
-            player_mut.move_player(&(ds::Vector3::new( 1.0,  0.0,  0.0) * deltatime));
-        }
-        if window.is_key_down(Key::Space) {
-            player_mut.move_player(&(ds::Vector3::new( 0.0,  1.0,  0.0) * deltatime));
-        }
-        if window.is_key_down(Key::LeftCtrl) {
-            player_mut.move_player(&(ds::Vector3::new( 0.0, -1.0,  0.0) * deltatime));
-        }
-
-        if window.is_key_down(Key::Left) {
-            player_mut.change_rotation(ds::Vector3::new( 0.0, 0.0, -0.5) * deltatime);
-        }
-        if window.is_key_down(Key::Right) {
-            player_mut.change_rotation(ds::Vector3::new( 0.0, 0.0,  0.5) * deltatime);
-        }
-
-        if window.is_key_down(Key::Up) {
-            player_mut.change_rotation(ds::Vector3::new( 0.5, 0.0,  0.0) * deltatime);
-        }
-        if window.is_key_down(Key::Down) {
-            player_mut.change_rotation(ds::Vector3::new(-0.5, 0.0,  0.0) * deltatime);
-        }
-        player_mut.update_outputs();
-
-        let elapsed = start.elapsed();
-        deltatime = (elapsed.as_millis() as f64) / 1000.0;
-        ms_until_fps_update -= elapsed.as_millis() as i64;
-
-        if ms_until_fps_update <= 0 {
-            fps = 1000/elapsed.as_millis();
-            ms_until_fps_update = 1000;
-        }
-
-        print!("\x1B[2J\x1B[1;1H");
-        println!("\n\n FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n\n Player Rotation: {:?}", fps, elapsed.as_millis(), player_mut.get_camera().pos(), player_mut.get_rotation());
-    }
+    event_loop.run_app(&mut app).expect("Event loop failed");
 }
+
