@@ -1,4 +1,5 @@
 use crate::ds;
+use crate::object;
 
 pub struct Camera {
     // inputs
@@ -97,6 +98,35 @@ impl Camera {
 
         // where is the upper left pixel
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
+    }
+
+    pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
+        let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
+        let ray_direction = pixel_center - self.pos();
+        let ray = ds::Ray::new(&self.pos(), &ray_direction);
+
+        let mut lowest_distance: Option<f64> = None;
+        let mut color = 0x0087CEEB;
+
+        for object in world {
+            let intersects = object.intersects(&ray);
+            
+            // we dont intersect or its behind the camera
+            if intersects.is_none() || intersects.unwrap() < 0.0 {
+                continue
+            }
+
+            let t = intersects.unwrap();
+            let surface_pos = ray.at(t);
+            let len_sq = (surface_pos - self.pos).length_sq();
+
+            if lowest_distance == None || len_sq < lowest_distance.unwrap() {
+                lowest_distance = Some(len_sq);
+                color = object.color(&surface_pos);
+            }
+        }
+        
+        return color;
     }
 
     pub fn set_pos(&mut self, pos: ds::Vector3) {

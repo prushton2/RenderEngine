@@ -44,11 +44,11 @@ impl App {
     pub fn handle_movement(&mut self) {
         let mut player_ref = self.player.write().unwrap();
         let key_movements: &[(KeyCode, ds::Vector3)] = &[
-            (KeyCode::KeyW,      ds::Vector3::new( 0.0,  0.0,  1.0)),
-            (KeyCode::KeyS,      ds::Vector3::new( 0.0,  0.0, -1.0)),
-            (KeyCode::KeyA,      ds::Vector3::new(-1.0,  0.0,  0.0)),
-            (KeyCode::KeyD,      ds::Vector3::new( 1.0,  0.0,  0.0)),
-            (KeyCode::Space,     ds::Vector3::new( 0.0,  1.0,  0.0)),
+            (KeyCode::KeyW,        ds::Vector3::new( 0.0,  0.0,  1.0)),
+            (KeyCode::KeyS,        ds::Vector3::new( 0.0,  0.0, -1.0)),
+            (KeyCode::KeyA,        ds::Vector3::new(-1.0,  0.0,  0.0)),
+            (KeyCode::KeyD,        ds::Vector3::new( 1.0,  0.0,  0.0)),
+            (KeyCode::Space,       ds::Vector3::new( 0.0,  1.0,  0.0)),
             (KeyCode::ControlLeft, ds::Vector3::new( 0.0, -1.0,  0.0)),
         ];
 
@@ -182,7 +182,7 @@ impl ApplicationHandler for App {
 
                         for x in 0..width {
                             for y in strip_start..strip_end {
-                                pixels[(y - strip_start) * width + x] = get_pixel_color(player_read.get_camera(), objects_ref.as_ref(), x as f64, y as f64);
+                                pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64);
                             }
                         }
 
@@ -233,35 +233,6 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
-}
-
-fn get_pixel_color(camera: &object::Camera, objects: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
-    let pixel_center = camera.pixel00_loc() + (x * camera.pixel_delta_w()) + (y * camera.pixel_delta_h());
-    let ray_direction = pixel_center - camera.pos();
-    let ray = ds::Ray::new(&camera.pos(), &ray_direction);
-
-    let mut lowest_distance: Option<f64> = None;
-    let mut color = 0x0087CEEB;
-
-    for object in objects {
-        let intersects = object.intersects(&ray);
-        
-        // we dont intersect or its behind the camera
-        if intersects.is_none() || intersects.unwrap() < 0.0 {
-            continue
-        }
-
-        let t = intersects.unwrap();
-        let surface_pos = ray.at(t);
-        let len_sq = (surface_pos - camera.pos()).length_sq();
-
-        if lowest_distance == None || len_sq < lowest_distance.unwrap() {
-            lowest_distance = Some(len_sq);
-            color = object.color(&surface_pos);
-        }
-    }
-    
-    return color;
 }
 
 fn main() {
