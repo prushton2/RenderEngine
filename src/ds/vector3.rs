@@ -43,7 +43,6 @@ impl Vector3 {
                 return vec.unit_vector();
             }
         }
-        return Self::zero();
     }
 
     pub fn random_on_hemisphere(normal: &Self) -> Self {

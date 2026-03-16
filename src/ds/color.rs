@@ -19,6 +19,14 @@ impl Color {
     pub fn to_u32(&self) -> u32 {
         (self.r as u32) << 16 | (self.g as u32) << 8 | (self.b as u32)
     }
+
+    pub fn blend(&self, b: Color) -> Color {
+        Color {
+            r: ((self.r as u16 + b.r as u16) / 2) as u8,
+            g: ((self.g as u16 + b.g as u16) / 2) as u8,
+            b: ((self.b as u16 + b.b as u16) / 2) as u8,
+        }
+    }
 }
 
 

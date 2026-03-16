@@ -1,22 +1,22 @@
-use std::cmp;
+// use std::cmp;
 
 use crate::ds;
-use crate::object::{Renderable, Intersectable};
-use crate::object::renderable::ColorType;
+use crate::object::Renderable;
+use crate::material::{Materialable, Material};
 
 pub struct Sphere {
     center: ds::Vector3,
     radius: f64,
     // bbox: ds::Aabb,
-    color: ColorType
+    material: Box<dyn Material>
 }
 
 impl Sphere {
-    pub fn new(center: &ds::Vector3, radius: f64, color: ColorType) -> Self {
+    pub fn new(center: &ds::Vector3, radius: f64, material: Box<dyn Material>) -> Self {
         Self {
             center: center.clone(),
             radius: radius,
-            color: color
+            material: material
             // bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
         }
     }
@@ -44,12 +44,18 @@ impl Renderable for Sphere {
             outward_surface_normal: (ray.at(intersection) - self.center) / self.radius
         }
     }
+}
+
+impl Materialable for Sphere {
+    fn get_material(&self) -> &dyn Material {
+        return self.material.as_ref();
+    }
+    
+    fn height(&self) -> f64 {
+        return self.radius * 2.0;
+    }
 
     fn center(&self) -> ds::Vector3 {
         return self.center;
-    }
-
-    fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
-        self.color
     }
 }

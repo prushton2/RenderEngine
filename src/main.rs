@@ -12,8 +12,10 @@ use winit::window::{Window, WindowId};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::object::Renderable;
-use crate::object::renderable::ColorType;
 
+use crate::material::Materialable;
+
+mod material;
 mod object;
 mod ds;
 
@@ -286,29 +288,31 @@ fn main() {
         camera
     );
 
-    let objects: Vec<Box<dyn object::Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00880000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00770000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, ColorType::Debug_shade)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00000088)))),
+    // let molly_mat = ;
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x00000000)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Debug_shade)),
+    let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.5, Box::new(material::Molly::new(0.0, 1.0)))),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x00FF0000)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x0000FF00)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x000000FF)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Absorb(ds::Color::from_u32(0x00FFFFFF)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Absorb(ds::Color::from_u32(0x00FFFFFF)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00000088)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+
+        // Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1,)),
 
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x000000FF)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x0000FF00)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::Absorb(ds::Color::from_u32(0x00000000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x00FF0000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, ColorType::Translucent(ds::Color::from_u32(0x00000000))))
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5))
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");

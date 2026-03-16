@@ -8,12 +8,11 @@ pub struct Quad {
     v: ds::Vector3,
     d: f64,
     normal: ds::Vector3,
-    color: ColorType
     // bbox: ds::Aabb
 }
 
 impl Quad {
-    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3, color: ColorType) -> Self {
+    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3) -> Self {
         Self {
             q: *q,
             u: *u,
@@ -62,12 +61,10 @@ impl Renderable for Quad {
             outward_surface_normal: self.normal
         }
     }
+}
 
+impl Materialable for Quad {
     fn center(&self) -> ds::Vector3 {
         return self.q + self.v/2.0 + self.u/2.0;
-    }
-
-    fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
-        self.color
     }
 }
