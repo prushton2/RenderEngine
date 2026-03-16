@@ -39,8 +39,8 @@ impl Renderable for Sphere {
         }
     }
 
-    fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::Hit_Record {
-        ds::Hit_Record {
+    fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::HitRecord {
+        ds::HitRecord {
             outward_surface_normal: (ray.at(intersection) - self.center) / self.radius
         }
     }

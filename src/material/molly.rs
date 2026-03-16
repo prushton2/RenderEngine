@@ -16,11 +16,13 @@ impl Molly {
 
 impl material::Material for Molly {
     fn ray_color(&self,
-        object: &dyn material::Materialable,
-        world: &Vec<Box<dyn object::Renderable + Send + Sync>>,
-        ray: &ds::Ray,
+        _camera: &object::Camera,
+        object: &dyn object::Renderable,
+        _world: &Vec<Box<dyn object::Renderable + Send + Sync>>,
+        _ray: &ds::Ray,
+        _t: f64,
         surface_pos: &ds::Vector3,
-        depth: u32
+        _depth: u32
     ) -> Color {
         let dist_from_bottom = (surface_pos - object.center()).y + object.height() / 2.0;
         let pct_to_top = 1.0 - (dist_from_bottom / object.height()).clamp(0.0, 1.0);

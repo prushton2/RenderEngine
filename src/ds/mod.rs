@@ -10,5 +10,5 @@ pub use vector3::Vector3;
 pub use ray::Ray;
 // pub use interval::Interval;
 // pub use aabb::Aabb;
-pub use hit_record::Hit_Record;
+pub use hit_record::HitRecord;
 pub use color::Color;

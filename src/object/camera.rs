@@ -106,7 +106,7 @@ impl Camera {
         let ray_direction = pixel_center - self.pos();
         let ray = ds::Ray::new(&self.pos(), &ray_direction);
 
-        return self.ray_color(world, &ray, 5).to_u32();
+        return self.ray_color(world, &ray, 6).to_u32();
     }
 
     pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> ds::Color {
@@ -114,6 +114,7 @@ impl Camera {
         let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
 
         let mut g_surface_pos: ds::Vector3 = ds::Vector3::zero();
+        let mut g_t: f64 = 0.0;
 
         
         if depth <= 0 {
@@ -134,46 +135,22 @@ impl Camera {
                 lowest_distance = Some(len_sq);
                 closest_object = Some(renderable.as_ref());
                 g_surface_pos = surface_pos;
+                g_t = t;
             }
         }
 
         return match closest_object {
             None => ds::Color::from_u32(0x00BADBED),
-            Some(obj) => obj.get_material().ray_color(obj, world, ray, &g_surface_pos, 5)
+            Some(obj) => obj.get_material().ray_color(&self, obj, world, ray, g_t, &g_surface_pos, depth-1)
         };
     }
 
-// match obj.color(&surface_pos) {
-//     ColorType::Rgb(c) => {
-//         c
-//     },
-//     object::renderable::ColorType::Absorb(c) => {
-//         let mut surface_normal = obj.hit_record(ray, closest_t).outward_surface_normal;
-//         if surface_normal.dot(&ray.direction) > 0.0 {
-//             surface_normal = -1.0 * surface_normal;
-//         }
-//         let bounce_origin = surface_pos + surface_normal * 0.001;
-//         let c2 = self.ray_color(world, &ds::Ray::new(&bounce_origin, &surface_normal), depth-1);
-//         c2.blend(c)
-//     },
-//     object::renderable::ColorType::Translucent(c) => {
-//         self.ray_color(world, &ds::Ray::new(&ray.at(closest_t+0.0000001), &ray.direction), depth-1).blend(c)
-//     },
-//     object::renderable::ColorType::Debug_shade => {
-//         let n = (surface_pos - obj.center()).unit_vector();
-//         ds::Color::from_u32(((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32))
-//     }
-//     object::renderable::ColorType::Reflective(c) => {
-//         c
-//     }
-// }
-
-    pub fn set_pos(&mut self, pos: ds::Vector3) {
-        self.pos = pos;
-        let delta_dir = self.dir - self.pos;
-        self.dir = pos;
-        self.dirty = true;
-    }
+    // pub fn set_pos(&mut self, pos: ds::Vector3) {
+    //     self.pos = pos;
+    //     let delta_dir = self.dir - self.pos;
+    //     self.dir = pos;
+    //     self.dirty = true;
+    // }
 
     pub fn move_camera(&mut self, delta: ds::Vector3) {
         self.pos = self.pos + delta;
@@ -181,10 +158,10 @@ impl Camera {
         self.dirty = true;
     }
 
-    pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
-        self.dir = pos;
-        self.dirty = true;
-    }
+    // pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
+    //     self.dir = pos;
+    //     self.dirty = true;
+    // }
     
     pub fn set_dir_relative(&mut self, dir: ds::Vector3) {
         self.dir = self.pos + (dir * self.focal_length);
@@ -199,22 +176,22 @@ impl Camera {
         }
     }
 
-    pub fn pixel_delta_w(&self) -> ds::Vector3 {
-        return self.pixel_delta_w;
-    }
-    pub fn pixel_delta_h(&self) -> ds::Vector3 {
-        return self.pixel_delta_h;
-    }
-    pub fn pixel00_loc(&self) -> ds::Vector3 {
-        return self.pixel00_loc;
-    }
+    // pub fn pixel_delta_w(&self) -> ds::Vector3 {
+    //     return self.pixel_delta_w;
+    // }
+    // pub fn pixel_delta_h(&self) -> ds::Vector3 {
+    //     return self.pixel_delta_h;
+    // }
+    // pub fn pixel00_loc(&self) -> ds::Vector3 {
+    //     return self.pixel00_loc;
+    // }
 
     pub fn pos(&self) -> ds::Vector3 {
         return self.pos;
     }
-    pub fn dir_absolute(&self) -> ds::Vector3 {
-        return self.dir;
-    }
+    // pub fn dir_absolute(&self) -> ds::Vector3 {
+    //     return self.dir;
+    // }
 
 }
 

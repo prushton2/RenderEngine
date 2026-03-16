@@ -8,10 +8,12 @@ pub trait Materialable: Send + Sync { // implement this on objects who you want 
 }
 
 pub trait Material: Send + Sync { // This is the interface materials use to talk to objects and raycasts
-    fn ray_color(&self, 
-        object: &dyn Materialable, 
+    fn ray_color(&self,
+        camera: &object::Camera,
+        object: &dyn object::Renderable, 
         world: &Vec<Box<dyn object::Renderable + Send + Sync>>, 
-        ray: &ds::Ray, 
+        ray: &ds::Ray,
+        t: f64,
         surface_pos: &ds::Vector3, 
         depth: u32
     ) -> ds::Color;
