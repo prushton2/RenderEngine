@@ -26,7 +26,8 @@ impl material::Material for Mirror {
     ) -> ds::Color {
         let normal = object.hit_record(ray, t).outward_surface_normal.unit_vector();
         let new_direction = ray.direction - 2.0 * ray.direction.dot(&normal) * normal;
-        
-        return camera.ray_color(world, &ds::Ray::new(surface_pos, &new_direction), depth).blend(self.color);
+        let new_ray = ds::Ray::new(&ray.at(t-0.000001), &new_direction);
+
+        return camera.ray_color(world, &new_ray, depth).blend(self.color);
     }
 }
