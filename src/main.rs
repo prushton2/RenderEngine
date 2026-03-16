@@ -291,7 +291,7 @@ fn main() {
     // let molly_mat = ;
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.5, Box::new(material::Molly::new(0.0, 1.0)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.5, Box::new(material::Molly::new(0.5, 1.0)))),
         // Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1)),
         // Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5)),
         // Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
