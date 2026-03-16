@@ -18,12 +18,3 @@ pub trait Material: Send + Sync { // This is the interface materials use to talk
         depth: u32
     ) -> ds::Color;
 }
-
-// #[derive(Clone, Copy, Debug)]
-// pub enum Material {
-//     Rgb(ds::Color),
-//     Absorb(ds::Color),
-//     Translucent(ds::Color),
-//     Reflective(ds::Color)
-//     Debug_shade,
-// }

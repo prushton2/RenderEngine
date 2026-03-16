@@ -176,23 +176,9 @@ impl Camera {
         }
     }
 
-    // pub fn pixel_delta_w(&self) -> ds::Vector3 {
-    //     return self.pixel_delta_w;
-    // }
-    // pub fn pixel_delta_h(&self) -> ds::Vector3 {
-    //     return self.pixel_delta_h;
-    // }
-    // pub fn pixel00_loc(&self) -> ds::Vector3 {
-    //     return self.pixel00_loc;
-    // }
-
     pub fn pos(&self) -> ds::Vector3 {
         return self.pos;
     }
-    // pub fn dir_absolute(&self) -> ds::Vector3 {
-    //     return self.dir;
-    // }
-
 }
 
 unsafe impl Sync for Camera {}
