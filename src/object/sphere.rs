@@ -45,9 +45,11 @@ impl Renderable for Sphere {
         }
     }
 
+    fn center(&self) -> ds::Vector3 {
+        return self.center;
+    }
+
     fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
         self.color
-        // let n = (surface_pos - self.center).unit_vector();
-        // ColorType::rgb(((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32))
     }
 }

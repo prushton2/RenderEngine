@@ -36,7 +36,7 @@ impl Vector3 {
     }
 
     pub fn random_unit_vector() -> Self {
-        while true {
+        loop {
             let vec = Self::random(-1.0, 1.0);
             let lensq = vec.length_sq();
             if 1e-160 < lensq && lensq <= 1.0 {

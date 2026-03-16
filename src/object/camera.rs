@@ -133,15 +133,19 @@ impl Camera {
             if lowest_distance == None || len_sq < lowest_distance.unwrap() {
                 lowest_distance = Some(len_sq);
                 color = match renderable.color(&surface_pos) {
-                    object::renderable::ColorType::rgb(c) => {
+                    object::renderable::ColorType::Rgb(c) => {
                         c
                     },
-                    object::renderable::ColorType::diffuse(c) => {
+                    object::renderable::ColorType::Diffuse(c) => {
                         let surface_normal = renderable.hit_record(ray, t).outward_surface_normal;
                         self.ray_color(world, &ds::Ray::new(&surface_pos, &surface_normal), depth-1)/2 + c/2
                     },
-                    object::renderable::ColorType::translucent(c) => {
+                    object::renderable::ColorType::Translucent(c) => {
                         self.ray_color(world, &ds::Ray::new(&ray.at(t+0.0000001), &ray.direction), depth-1)/2 + c/2
+                    },
+                    object::renderable::ColorType::Debug_shade => {
+                        let n = (surface_pos - renderable.center()).unit_vector();
+                        ds::Color::from_u32(((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32))
                     }
                 };
             }

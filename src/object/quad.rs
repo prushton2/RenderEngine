@@ -69,6 +69,10 @@ impl Renderable for Quad {
         }
     }
 
+    fn center(&self) -> ds::Vector3 {
+        return self.q + self.v/2.0 + self.u/2.0;
+    }
+
     fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
         self.color
     }
