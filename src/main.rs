@@ -301,8 +301,8 @@ fn main() {
         Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00008800)))),
         Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00000088)))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Absorb::new(0x00FFFFFF)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Absorb::new(0x00FFFFFF)))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00FFFFFF)))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00FFFFFF)))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, Box::new(material::StaticColor::new(0x000000FF)))),
 
 
