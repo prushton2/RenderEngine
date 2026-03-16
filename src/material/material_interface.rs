@@ -9,12 +9,12 @@ pub trait Materialable: Send + Sync { // implement this on objects who you want 
 
 pub trait Material: Send + Sync { // This is the interface materials use to talk to objects and raycasts
     fn ray_color(&self,
-        camera: &object::Camera,
-        object: &dyn object::Renderable, 
-        world: &Vec<Box<dyn object::Renderable + Send + Sync>>, 
-        ray: &ds::Ray,
-        t: f64,
-        surface_pos: &ds::Vector3, 
-        depth: u32
+        camera: &object::Camera, // renderer's camera
+        object: &dyn object::Renderable, // the object the ray intersected with (the owner of this material)
+        world: &Vec<Box<dyn object::Renderable + Send + Sync>>, // all objects in the world
+        ray: &ds::Ray, // the ray that made the intersection
+        t: f64, // distance along the ray that the intersection was made
+        surface_pos: &ds::Vector3, // position on the surface of the object the intersection was made
+        depth: u32 // recursion depth (dont touch, just pass to camera.ray_color if you call it)
     ) -> ds::Color;
 }
