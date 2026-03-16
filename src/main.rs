@@ -6,9 +6,9 @@ use std::sync::{Arc, RwLock};
 
 use softbuffer::{Context, Surface};
 use winit::application::ApplicationHandler;
-use winit::event::{ElementState, KeyEvent, WindowEvent};
+use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{Window, WindowId};
+use winit::window::{Window, WindowId, CursorGrabMode};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::object::Renderable;
@@ -20,6 +20,7 @@ mod ds;
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
 const THREAD_COUNT: usize = 32;
+const SENSITIVITY: f64 = 0.001;
 
 struct App {
     window: Option<Rc<Window>>,
@@ -30,6 +31,8 @@ struct App {
     objects: Arc<Vec<Box<dyn object::Renderable + Send + Sync>>>,
     
     keyboard: HashMap<KeyCode, bool>,
+    mouse_delta: (f64, f64),
+
     last_frame: std::time::Instant,
     deltatime: f64,
 
@@ -80,6 +83,9 @@ impl App {
             }
         }
 
+        player_ref.change_rotation(ds::Vector3::new(-self.mouse_delta.1, 0.0, self.mouse_delta.0));
+        self.mouse_delta = (0.0, 0.0);
+
         player_ref.update_outputs();
     }
 }
@@ -93,7 +99,10 @@ impl Default for App {
 
             player: Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
             objects: vec![].into(),
+            
             keyboard: [].into(),
+            mouse_delta: (0.0, 0.0),
+
             last_frame: std::time::Instant::now(),
             deltatime: 0.0,
 
@@ -118,6 +127,11 @@ impl ApplicationHandler for App {
                 .expect("Failed to create window"),
         );
 
+        window.set_cursor_grab(CursorGrabMode::Locked)
+            .or_else(|_| window.set_cursor_grab(CursorGrabMode::Confined))
+            .unwrap();
+        window.set_cursor_visible(false);
+
         let context = Context::new(window.clone()).expect("Failed to create softbuffer context");
         let surface = Surface::new(&context, window.clone()).expect("Failed to create surface");
 
@@ -129,6 +143,20 @@ impl ApplicationHandler for App {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         if let Some(window) = &self.window {
             window.request_redraw();
+        }
+    }
+
+    fn device_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _device_id: DeviceId,
+        event: DeviceEvent,
+    ) {
+        match event {
+            DeviceEvent::MouseMotion { delta: (dx, dy) } => {
+                self.mouse_delta = (self.mouse_delta.0 + (dx as f64)*SENSITIVITY, self.mouse_delta.1 + (dy as f64)*SENSITIVITY);
+            },
+            _ => {}
         }
     }
 
