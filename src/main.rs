@@ -18,6 +18,7 @@ mod ds;
 
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
+const THREAD_COUNT: usize = 32;
 
 struct App {
     window: Option<Rc<Window>>,
@@ -175,19 +176,18 @@ impl ApplicationHandler for App {
                 
                 let mut buf = surface.buffer_mut().expect("Failed to get buffer");
                 
-                let thread_count = 8;
                 let mut threads = vec![];
 
-                for i in 0..thread_count {
+                for i in 0..THREAD_COUNT {
                     let player_ref = Arc::clone(&self.player);
                     let objects_ref = Arc::clone(&self.objects);
 
                     threads.push(thread::spawn(move || {
-                        let strip_start = (height / thread_count) * i;
-                        let strip_end = if i == thread_count - 1 {
+                        let strip_start = (height / THREAD_COUNT) * i;
+                        let strip_end = if i == THREAD_COUNT - 1 {
                             height  // last thread takes any leftover rows
                         } else {
-                            (height / thread_count) * (i + 1)
+                            (height / THREAD_COUNT) * (i + 1)
                         };
                         let strip_height = strip_end - strip_start;
 
