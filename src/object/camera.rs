@@ -100,10 +100,10 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
     }
 
-    pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
+    pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64, ray_override: Option<ds::Ray>) -> u32 {
         let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
         let ray_direction = pixel_center - self.pos();
-        let ray = ds::Ray::new(&self.pos(), &ray_direction);
+        let ray = if ray_override.is_none() { ds::Ray::new(&self.pos(), &ray_direction) } else { ray_override.unwrap() };
 
         let mut lowest_distance: Option<f64> = None;
         let mut color = 0x0087CEEB;
@@ -123,6 +123,10 @@ impl Camera {
             if lowest_distance == None || len_sq < lowest_distance.unwrap() {
                 lowest_distance = Some(len_sq);
                 color = object.color(&surface_pos);
+                // if color >> 24 == 1 {
+                //     let vec = 
+                //     color = self.get_pixel_color(world, 0.0, 0.0, ds::Ray::new(surface_pos,))
+                // }
             }
         }
         

@@ -1,4 +1,6 @@
 use auto_ops::*;
+use rand;
+use rand::RngExt;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Vector3 {
@@ -22,6 +24,34 @@ impl Vector3 {
             y: 0.0,
             z: 0.0
         }
+    }
+
+    pub fn random(min: f64, max: f64) -> Self {
+        let mut rng = rand::rng();
+        Self {
+            x: rng.random_range(min..max),
+            y: rng.random_range(min..max),
+            z: rng.random_range(min..max),
+        }
+    }
+
+    pub fn random_unit_vector() -> Self {
+        while true {
+            let vec = Self::random(-1.0, 1.0);
+            let lensq = vec.length_sq();
+            if 1e-160 < lensq && lensq <= 1.0 {
+                return vec.unit_vector();
+            }
+        }
+        return Self::zero();
+    }
+
+    pub fn random_on_hemisphere(normal: &Self) -> Self {
+        let on_unit_sphere = Self::random_unit_vector();
+        if on_unit_sphere.dot(normal) < 0.0 {
+            return -1.0 * on_unit_sphere;
+        }
+        return on_unit_sphere;
     }
 
     pub fn pitch(&self) -> f64 {
