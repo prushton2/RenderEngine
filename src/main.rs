@@ -30,6 +30,13 @@ struct App {
     keyboard: HashMap<KeyCode, bool>,
     last_frame: std::time::Instant,
     deltatime: f64,
+
+    // statistics
+    fps_over_last_second: Vec<f64>,
+    deltatime_over_last_second: Vec<f64>,
+    average_fps: u32,
+    average_deltatime: u32,
+    statistics_timer: std::time::Instant
 }
 
 impl App {
@@ -81,11 +88,18 @@ impl Default for App {
             window: None,
             surface: None,
             context: None,
+
             player: Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
             objects: vec![].into(),
             keyboard: [].into(),
             last_frame: std::time::Instant::now(),
-            deltatime: 0.0
+            deltatime: 0.0,
+
+            fps_over_last_second: vec![],
+            deltatime_over_last_second: vec![],
+            average_fps: 0,
+            average_deltatime: 0,
+            statistics_timer: std::time::Instant::now()
         }
     }
 }
@@ -202,8 +216,33 @@ impl ApplicationHandler for App {
 
                 let player_mut = self.player.read().unwrap();
 
+                if self.statistics_timer.elapsed().as_millis() >= 1000 {
+                    self.average_fps = {
+                        let mut sum = 0.0;
+                        for i in &self.fps_over_last_second {
+                            sum += i;
+                        }
+                        sum/self.fps_over_last_second.len() as f64
+                    } as u32;
+
+                    self.average_deltatime = {
+                        let mut sum = 0.0;
+                        for i in &self.deltatime_over_last_second {
+                            sum += i;
+                        }
+                        sum/self.deltatime_over_last_second.len() as f64
+                    } as u32;
+
+                    self.fps_over_last_second.clear();
+                    self.deltatime_over_last_second.clear();
+                    self.statistics_timer = std::time::Instant::now();
+                }
+
+                self.fps_over_last_second.push(1.0/self.deltatime);
+                self.deltatime_over_last_second.push(self.deltatime*1000.0);
+
                 print!("\x1B[2J\x1B[1;1H");
-                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", (1.0/self.deltatime) as u32, self.deltatime*1000.0, player_mut.get_camera().pos(), player_mut.get_rotation());
+                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.average_fps, self.average_deltatime, player_mut.get_camera().pos(), player_mut.get_rotation());
             }
 
             WindowEvent::Resized(_) => {
