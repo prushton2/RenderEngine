@@ -21,6 +21,7 @@ const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
 const THREAD_COUNT: usize = 32;
 const SENSITIVITY: f64 = 0.001;
+const SPEED: f64 = 1.5;
 
 struct App {
     window: Option<Rc<Window>>,
@@ -73,7 +74,7 @@ impl App {
 
         for (key, dir) in key_movements {
             if self.keyboard.get(key) == Some(&true) {
-                player_ref.move_player(&(dir * self.deltatime));
+                player_ref.move_player(&(dir * SPEED * self.deltatime));
             }
         }
 
@@ -313,8 +314,6 @@ fn main() {
     let player = object::Player::new(
         camera
     );
-
-    // let molly_mat = ;
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
         Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5, Box::new(material::Molly::new(0.5, 1.0)))),
