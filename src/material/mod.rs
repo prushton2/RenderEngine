@@ -4,6 +4,7 @@ pub mod static_color;
 pub mod absorb;
 pub mod translucent;
 pub mod mirror;
+pub mod debug;
 
 pub use material_interface::Materialable;
 pub use material_interface::Material;
@@ -12,3 +13,4 @@ pub use static_color::StaticColor;
 pub use absorb::Absorb;
 pub use translucent::Translucent;
 pub use mirror::Mirror;
+pub use debug::Debug;
