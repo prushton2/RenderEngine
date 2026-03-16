@@ -12,7 +12,7 @@ pub trait Intersectable {
 
 #[derive(Clone, Copy, Debug)]
 pub enum ColorType {
-    rgb(u32),
-    diffuse(u32),
-    translucent(u32)
+    rgb(ds::Color),
+    diffuse(ds::Color),
+    translucent(ds::Color)
 }

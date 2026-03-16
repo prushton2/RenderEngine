@@ -170,7 +170,6 @@ impl ApplicationHandler for App {
                 
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
-
                 
                 let surface = self.surface.as_mut().unwrap();
                 surface.resize(width_nzu32, height_nzu32).expect("Failed to resize surface");
@@ -288,18 +287,18 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn object::Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.1, ColorType::rgb(0x00880000))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, ColorType::rgb(0x00770000))),
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, ColorType::rgb(0x00008800))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, ColorType::rgb(0x00000088))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.1, ColorType::rgb(ds::Color::from_u32(0x00880000)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, ColorType::rgb(ds::Color::from_u32(0x00770000)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, ColorType::rgb(ds::Color::from_u32(0x00008800)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, ColorType::rgb(ds::Color::from_u32(0x00000088)))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::translucent(0x00000000))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::translucent(ds::Color::from_u32(0x00000000)))),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, ColorType::rgb(0x00000088))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, ColorType::rgb(0x00008800))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::diffuse(0x00000000))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, ColorType::rgb(0x00880000))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, ColorType::translucent(0x00000000)))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, ColorType::rgb(ds::Color::from_u32(0x00000088)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, ColorType::rgb(ds::Color::from_u32(0x00008800)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::diffuse(ds::Color::from_u32(0x00000000)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, ColorType::rgb(ds::Color::from_u32(0x00880000)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, ColorType::translucent(ds::Color::from_u32(0x00000000))))
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");

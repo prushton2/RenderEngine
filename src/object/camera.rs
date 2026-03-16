@@ -1,6 +1,8 @@
 use crate::ds;
 use crate::object;
 
+use crate::ds::Color;
+
 pub struct Camera {
     // inputs
     pos: ds::Vector3,
@@ -105,12 +107,12 @@ impl Camera {
         let ray_direction = pixel_center - self.pos();
         let ray = ds::Ray::new(&self.pos(), &ray_direction);
 
-        return self.ray_color(world, &ray, 2);
+        return self.ray_color(world, &ray, 2).to_u32();
     }
 
-    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> u32 {
+    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> Color {
         let mut lowest_distance: Option<f64> = None;
-        let mut color = 0x00BADBED;
+        let mut color = Color::from_u32(0x00BADBED);
 
         if depth == 0 {
             return color
