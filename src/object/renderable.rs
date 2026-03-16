@@ -14,7 +14,7 @@ pub trait Intersectable {
 #[derive(Clone, Copy, Debug)]
 pub enum ColorType {
     Rgb(ds::Color),
-    Diffuse(ds::Color),
+    Absorb(ds::Color),
     Translucent(ds::Color),
     Debug_shade,
 }

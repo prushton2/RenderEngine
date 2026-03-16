@@ -293,15 +293,20 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00000088)))),
 
         Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x00000000)))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Debug_shade)),
 
         Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x00FF0000)))),
         Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x0000FF00)))),
         Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Translucent(ds::Color::from_u32(0x000000FF)))),
 
+        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Absorb(ds::Color::from_u32(0x00FFFFFF)))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::Absorb(ds::Color::from_u32(0x00FFFFFF)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, ColorType::Rgb(ds::Color::from_u32(0x00000088)))),
+
 
         Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x000000FF)))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x0000FF00)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::Diffuse(ds::Color::from_u32(0x00000000)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::Absorb(ds::Color::from_u32(0x00000000)))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, ColorType::Rgb(ds::Color::from_u32(0x00FF0000)))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, ColorType::Translucent(ds::Color::from_u32(0x00000000))))
     ];

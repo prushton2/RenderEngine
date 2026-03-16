@@ -107,7 +107,7 @@ impl Camera {
         let ray_direction = pixel_center - self.pos();
         let ray = ds::Ray::new(&self.pos(), &ray_direction);
 
-        return self.ray_color(world, &ray, 2).to_u32();
+        return self.ray_color(world, &ray, 5).to_u32();
     }
 
     pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> Color {
@@ -136,7 +136,7 @@ impl Camera {
                     object::renderable::ColorType::Rgb(c) => {
                         c
                     },
-                    object::renderable::ColorType::Diffuse(c) => {
+                    object::renderable::ColorType::Absorb(c) => {
                         let surface_normal = renderable.hit_record(ray, t).outward_surface_normal;
                         self.ray_color(world, &ds::Ray::new(&surface_pos, &surface_normal), depth-1)/2 + c/2
                     },
