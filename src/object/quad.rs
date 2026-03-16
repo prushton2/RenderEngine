@@ -1,5 +1,6 @@
 use crate::ds;
 use crate::Renderable;
+use crate::object::renderable::ColorType;
 
 pub struct Quad {
     q: ds::Vector3,
@@ -7,21 +8,23 @@ pub struct Quad {
     v: ds::Vector3,
     d: f64,
     normal: ds::Vector3,
-    bbox: ds::Aabb
+    color: ColorType
+    // bbox: ds::Aabb
 }
 
 impl Quad {
-    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3) -> Self {
+    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3, color: ColorType) -> Self {
         Self {
             q: *q,
             u: *u,
             v: *v,
-            bbox: ds::Aabb::from_aabb(
-                ds::Aabb::from_vector3(q, &(q+u+v)),
-                ds::Aabb::from_vector3(&(q+u), &(q+v)),
-            ),
+            // bbox: ds::Aabb::from_aabb(
+            //     ds::Aabb::from_vector3(q, &(q+u+v)),
+            //     ds::Aabb::from_vector3(&(q+u), &(q+v)),
+            // ),
             normal: u.cross(&v).unit_vector(),
-            d: u.cross(&v).unit_vector().dot(q)
+            d: u.cross(&v).unit_vector().dot(q),
+            color: color
         }
     }
 }
@@ -66,7 +69,7 @@ impl Renderable for Quad {
         }
     }
 
-    fn color(&self, surface_pos: &ds::Vector3) -> u32 {
-        0x00333333
+    fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
+        self.color
     }
 }

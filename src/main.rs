@@ -12,6 +12,7 @@ use winit::window::{Window, WindowId};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::object::Renderable;
+use crate::object::renderable::ColorType;
 
 mod object;
 mod ds;
@@ -287,17 +288,18 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn object::Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 7.0), 0.1)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(0.0, 0.0, 5.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 7.0), 0.1, ColorType::rgb(0x00880000))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, ColorType::rgb(0x00770000))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, ColorType::rgb(0x00008800))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, ColorType::rgb(0x00000088))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), ColorType::translucent(0x00000000))),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, ColorType::rgb(0x00000088))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, ColorType::rgb(0x00008800))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, ColorType::diffuse(0x00000000))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, ColorType::rgb(0x00880000))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, ColorType::translucent(0x00000000)))
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");

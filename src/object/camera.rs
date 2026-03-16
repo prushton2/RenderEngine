@@ -105,12 +105,16 @@ impl Camera {
         let ray_direction = pixel_center - self.pos();
         let ray = ds::Ray::new(&self.pos(), &ray_direction);
 
-        return self.ray_color(world, &ray);
+        return self.ray_color(world, &ray, 2);
     }
 
-    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray) -> u32 {
+    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> u32 {
         let mut lowest_distance: Option<f64> = None;
         let mut color = 0x00BADBED;
+
+        if depth == 0 {
+            return color
+        }
 
         for renderable in world {
             let intersects = renderable.intersects(&ray);
@@ -122,15 +126,22 @@ impl Camera {
 
             let t = intersects.unwrap();
             let surface_pos = ray.at(t);
-            let len_sq = (surface_pos - self.pos).length_sq();
+            let len_sq = (surface_pos - ray.origin).length_sq();
 
             if lowest_distance == None || len_sq < lowest_distance.unwrap() {
                 lowest_distance = Some(len_sq);
-                color = renderable.color(&surface_pos);
-                // if color >> 24 == 1 {
-                //     let vec = 
-                //     color = self.get_pixel_color(world, 0.0, 0.0, ds::Ray::new(surface_pos,))
-                // }
+                color = match renderable.color(&surface_pos) {
+                    object::renderable::ColorType::rgb(c) => {
+                        c
+                    },
+                    object::renderable::ColorType::diffuse(c) => {
+                        let surface_normal = renderable.hit_record(ray, t).outward_surface_normal;
+                        self.ray_color(world, &ds::Ray::new(&surface_pos, &surface_normal), depth-1)/2 + c/2
+                    },
+                    object::renderable::ColorType::translucent(c) => {
+                        self.ray_color(world, &ds::Ray::new(&ray.at(t+0.0000001), &ray.direction), depth-1)/2 + c/2
+                    }
+                };
             }
         }
         return color;

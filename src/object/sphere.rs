@@ -1,21 +1,23 @@
 use std::cmp;
 
 use crate::ds;
-use crate::object::Renderable;
-use crate::object::Intersectable;
+use crate::object::{Renderable, Intersectable};
+use crate::object::renderable::ColorType;
 
 pub struct Sphere {
     center: ds::Vector3,
     radius: f64,
-    bbox: ds::Aabb
+    // bbox: ds::Aabb,
+    color: ColorType
 }
 
 impl Sphere {
-    pub fn new(center: &ds::Vector3, radius: f64) -> Self {
+    pub fn new(center: &ds::Vector3, radius: f64, color: ColorType) -> Self {
         Self {
             center: center.clone(),
             radius: radius,
-            bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
+            color: color
+            // bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
         }
     }
 }
@@ -43,8 +45,9 @@ impl Renderable for Sphere {
         }
     }
 
-    fn color(&self, surface_pos: &ds::Vector3) -> u32 {
-        let n = (surface_pos - self.center).unit_vector();
-        ((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32)
+    fn color(&self, _surface_pos: &ds::Vector3) -> ColorType {
+        self.color
+        // let n = (surface_pos - self.center).unit_vector();
+        // ColorType::rgb(((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32))
     }
 }
