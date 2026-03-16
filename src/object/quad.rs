@@ -54,6 +54,17 @@ impl Renderable for Quad {
         return Some(t)
     }
 
+    fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::Hit_Record {
+        if ray.direction.dot(&self.normal) < 0.0 {
+            return ds::Hit_Record {
+                outward_surface_normal: self.normal
+            }
+        }
+
+        return ds::Hit_Record {
+            outward_surface_normal: -1.0 * self.normal
+        }
+    }
 
     fn color(&self, surface_pos: &ds::Vector3) -> u32 {
         0x00333333

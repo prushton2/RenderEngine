@@ -1,3 +1,5 @@
+use std::cmp;
+
 use crate::ds;
 use crate::object::Renderable;
 use crate::object::Intersectable;
@@ -29,7 +31,15 @@ impl Renderable for Sphere {
         if discriminant < 0.0 {
             return None;
         } else {
-            return Some((h - discriminant.sqrt() ) / a);
+            return Some(
+                ((h - discriminant.sqrt() ) / a).min((h + discriminant.sqrt() ) / a)
+            );
+        }
+    }
+
+    fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::Hit_Record {
+        ds::Hit_Record {
+            outward_surface_normal: (ray.at(intersection) - self.center) / self.radius
         }
     }
 

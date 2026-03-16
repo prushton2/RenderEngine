@@ -196,7 +196,7 @@ impl ApplicationHandler for App {
 
                         for x in 0..width {
                             for y in strip_start..strip_end {
-                                pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64, None);
+                                pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64);
                             }
                         }
 
