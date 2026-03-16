@@ -112,45 +112,53 @@ impl Camera {
 
     pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> Color {
         let mut lowest_distance: Option<f64> = None;
-        let mut color = Color::from_u32(0x00BADBED);
+        let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
+        let mut closest_t = 0.0;
 
-        if depth == 0 {
-            return color
+        if depth <= 0 {
+            return Color::from_u32(0x00BADBED);
         }
 
         for renderable in world {
             let intersects = renderable.intersects(&ray);
-            
-            // we dont intersect or its behind the camera
             if intersects.is_none() || intersects.unwrap() < 0.0 {
-                continue
+                continue;
             }
 
             let t = intersects.unwrap();
             let surface_pos = ray.at(t);
             let len_sq = (surface_pos - ray.origin).length_sq();
 
-            if lowest_distance == None || len_sq < lowest_distance.unwrap() {
+            if lowest_distance.is_none() || len_sq < lowest_distance.unwrap() {
                 lowest_distance = Some(len_sq);
-                color = match renderable.color(&surface_pos) {
+                closest_object = Some(renderable.as_ref());
+                closest_t = t;
+            }
+        }
+
+        let surface_pos = ray.at(closest_t);
+
+        return match closest_object {
+            None => Color::from_u32(0x00BADBED),
+            Some(obj) => {
+                match obj.color(&surface_pos) {
                     object::renderable::ColorType::Rgb(c) => {
                         c
                     },
                     object::renderable::ColorType::Absorb(c) => {
-                        let surface_normal = renderable.hit_record(ray, t).outward_surface_normal;
+                        let surface_normal = obj.hit_record(ray, closest_t).outward_surface_normal;
                         self.ray_color(world, &ds::Ray::new(&surface_pos, &surface_normal), depth-1)/2 + c/2
                     },
                     object::renderable::ColorType::Translucent(c) => {
-                        self.ray_color(world, &ds::Ray::new(&ray.at(t+0.0000001), &ray.direction), depth-1)/2 + c/2
+                        self.ray_color(world, &ds::Ray::new(&ray.at(closest_t+0.0000001), &ray.direction), depth-1)/2 + c/2
                     },
                     object::renderable::ColorType::Debug_shade => {
-                        let n = (surface_pos - renderable.center()).unit_vector();
+                        let n = (surface_pos - obj.center()).unit_vector();
                         ds::Color::from_u32(((n.x*255.0) as u32) << 16 | ((n.y*255.0) as u32) << 8 | ((n.z*-255.0) as u32))
                     }
-                };
+                }
             }
-        }
-        return color;
+        };
     }
 
     pub fn set_pos(&mut self, pos: ds::Vector3) {
