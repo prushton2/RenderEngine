@@ -21,7 +21,7 @@ impl material::Material for Mirror {
         world: &Vec<Box<dyn object::Renderable + Send + Sync>>,
         ray: &ds::Ray,
         t: f64,
-        surface_pos: &ds::Vector3,
+        _surface_pos: &ds::Vector3,
         depth: u32
     ) -> ds::Color {
         let normal = object.hit_record(ray, t).outward_surface_normal.unit_vector();
