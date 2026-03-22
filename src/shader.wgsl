@@ -1,11 +1,16 @@
 struct Uniform {
-    pos: vec3<f32>,
-    pixel00_loc: vec3<f32>,
+    pos:           vec3<f32>,
+    _pad0:         f32,
+    pixel00_loc:   vec3<f32>,
+    _pad1:         f32,
     pixel_delta_w: vec3<f32>,
+    _pad2:         f32,
     pixel_delta_h: vec3<f32>,
-    width: u32,
-    height: u32,
-    sphere_count: u32,
+    _pad3:         f32,
+    width:         u32,
+    height:        u32,
+    sphere_count:  u32,
+    _pad4:         u32,
 }
 
 struct Sphere {
@@ -75,6 +80,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let ray_dir = pixel_center - uniforms.pos;
 
     let idx = y * uniforms.width + x;
+
+    if uniforms.sphere_count == 0u {
+        output[idx] = 0x00FF0000u; // red = sphere_count is 0
+        return;
+    }
     
     let record = closest_hit(uniforms.pos, ray_dir);
 
