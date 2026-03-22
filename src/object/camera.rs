@@ -19,6 +19,12 @@ pub struct Camera {
     pixel00_loc: ds::Vector3,
 }
 
+pub struct GpuCamera {
+    pixel00_loc: [f32; 3],
+    pixel_delta_w: [f32; 3],
+    pixel_delta_h: [f32; 3],
+}
+
 impl Camera {
     pub fn zero() -> Self { // irreedeemable
         Self {
@@ -99,6 +105,14 @@ impl Camera {
 
         // where is the upper left pixel
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
+    }
+
+    pub fn to_gpu(&self) -> GpuCamera {
+        GpuCamera {
+            pixel00_loc: self.pixel00_loc,
+            pixel_delta_w: self.pixel_delta_w,
+            pixel_delta_h: self.pixel_delta_h
+        }
     }
 
     // pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {

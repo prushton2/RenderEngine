@@ -24,25 +24,52 @@ const SENSITIVITY: f64 = 0.001;
 const SPEED: f64 = 1.5;
 
 struct App {
+    // window
     window: Option<Rc<Window>>,
-    surface: Option<Surface<Rc<Window>, Rc<Window>>>,
-    context: Option<Context<Rc<Window>>>,
 
-    player: Arc<RwLock<object::Player>>,
+    // wgpu (set in resumed, always Some after that)
+    device:           Option<wgpu::Device>,
+    queue:            Option<wgpu::Queue>,
+    wgpu_surface:     Option<wgpu::Surface<'static>>,
+    surface_config:   Option<wgpu::SurfaceConfiguration>,
+    compute_pipeline: Option<wgpu::ComputePipeline>,
+    render_pipeline:  Option<wgpu::RenderPipeline>,
+    bind_group:       Option<wgpu::BindGroup>,
+    camera_buf:       Option<wgpu::Buffer>,
+    spheres_buf:      Option<wgpu::Buffer>,
+    // quads_buf:        Option<wgpu::Buffer>,
+    output_buf:       Option<wgpu::Buffer>,
+
+    // scene
+    player:  Arc<RwLock<object::Player>>,
     objects: Arc<Vec<Box<dyn object::Renderable + Send + Sync>>>,
-    
-    keyboard: HashMap<KeyCode, bool>,
+
+    // input
+    keyboard:    HashMap<KeyCode, bool>,
     mouse_delta: (f64, f64),
 
-    last_frame: std::time::Instant,
-    deltatime: f64,
-
     // statistics
-    fps_over_last_second: Vec<f64>,
+    last_frame:                 std::time::Instant,
+    deltatime:                  f64,
+
+    fps_over_last_second:       Vec<f64>,
     deltatime_over_last_second: Vec<f64>,
-    average_fps: u32,
-    average_deltatime: u32,
-    statistics_timer: std::time::Instant
+    average_fps:                u32,
+    average_deltatime:          u32,
+    statistics_timer:           std::time::Instant,
+}
+
+struct GpuState<'a> { // makes my life infinitely easier
+    device:           &'a wgpu::Device,
+    queue:            &'a wgpu::Queue,
+    surface:          &'a wgpu::Surface<'static>,
+    surface_config:   &'a wgpu::SurfaceConfiguration,
+    compute_pipeline: &'a wgpu::ComputePipeline,
+    render_pipeline:  &'a wgpu::RenderPipeline,
+    bind_group:       &'a wgpu::BindGroup,
+    camera_buf:       &'a wgpu::Buffer,
+    spheres_buf:      &'a wgpu::Buffer,
+    output_buf:       &'a wgpu::Buffer,
 }
 
 impl App {
@@ -89,29 +116,55 @@ impl App {
 
         player_ref.update_outputs();
     }
+
+    fn get_gpu_state(&self) -> Option<GpuState> {
+        Some(
+            GpuState {
+                device:           self.device.as_ref()?,
+                queue:            self.queue.as_ref()?,
+                surface:          self.wgpu_surface.as_ref()?,
+                surface_config:   self.surface_config.as_ref()?,
+                compute_pipeline: self.compute_pipeline.as_ref()?,
+                render_pipeline:  self.render_pipeline.as_ref()?,
+                bind_group:       self.bind_group.as_ref()?,
+                camera_buf:       self.camera_buf.as_ref()?,
+                spheres_buf:      self.spheres_buf.as_ref()?,
+                // quads_buf:        self.quads_buf.as_ref()?,
+                output_buf:       self.output_buf.as_ref()?,
+            }
+        )
+    }
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
-            window: None,
-            surface: None,
-            context: None,
+            window:           None,
+            device:           None,
+            queue:            None,
+            wgpu_surface:     None,
+            surface_config:   None,
+            compute_pipeline: None,
+            render_pipeline:  None,
+            bind_group:       None,
+            camera_buf:       None,
+            spheres_buf:      None,
+            output_buf:       None,
 
-            player: Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
-            objects: vec![].into(),
-            
-            keyboard: [].into(),
+            player:  Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
+            objects: Arc::new(vec![]),
+
+            keyboard:    HashMap::new(),
             mouse_delta: (0.0, 0.0),
 
-            last_frame: std::time::Instant::now(),
-            deltatime: 0.0,
+            last_frame:                 std::time::Instant::now(),
+            deltatime:                  0.0,
 
-            fps_over_last_second: vec![],
+            fps_over_last_second:       vec![],
             deltatime_over_last_second: vec![],
-            average_fps: 0,
-            average_deltatime: 0,
-            statistics_timer: std::time::Instant::now()
+            average_fps:                0,
+            average_deltatime:          0,
+            statistics_timer:           std::time::Instant::now(),
         }
     }
 }
@@ -119,13 +172,11 @@ impl Default for App {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = Rc::new(
-            event_loop
-                .create_window(
-                    Window::default_attributes()
-                        .with_title("Render Engine")
-                        .with_inner_size(winit::dpi::LogicalSize::new(WIDTH as f64, HEIGHT as f64)),
-                )
-                .expect("Failed to create window"),
+            event_loop.create_window(
+                Window::default_attributes()
+                    .with_title("Render Engine")
+                    .with_inner_size(winit::dpi::LogicalSize::new(WIDTH as f64, HEIGHT as f64))
+            ).unwrap()
         );
 
         window.set_cursor_grab(CursorGrabMode::Locked)
@@ -133,12 +184,23 @@ impl ApplicationHandler for App {
             .unwrap();
         window.set_cursor_visible(false);
 
-        let context = Context::new(window.clone()).expect("Failed to create softbuffer context");
-        let surface = Surface::new(&context, window.clone()).expect("Failed to create surface");
+        // wgpu init is async but resumed() isn't — use pollster to block
+        let (device, queue, surface, surface_config,
+            compute_pipeline, render_pipeline,
+            bind_group, camera_buf, spheres_buf, output_buf
+        ) = pollster::block_on(init_wgpu(window, WIDTH as u32, HEIGHT as u32));
 
-        self.context = Some(context);
-        self.surface = Some(surface);
-        self.window = Some(window);
+        self.window           = Some(window);
+        self.device           = Some(device);
+        self.queue            = Some(queue);
+        self.wgpu_surface     = Some(surface);
+        self.surface_config   = Some(surface_config);
+        self.compute_pipeline = Some(compute_pipeline);
+        self.render_pipeline  = Some(render_pipeline);
+        self.bind_group       = Some(bind_group);
+        self.camera_buf       = Some(camera_buf);
+        self.spheres_buf      = Some(spheres_buf);
+        self.output_buf       = Some(output_buf);
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
@@ -176,7 +238,7 @@ impl ApplicationHandler for App {
                 self.deltatime = self.last_frame.elapsed().as_millis() as f64 / 1000.0;
                 self.last_frame = std::time::Instant::now();
 
-                if self.surface.is_none() || self.window.is_none() {
+                if self.window.is_none() {
                     return;
                 }
                                 
@@ -194,56 +256,61 @@ impl ApplicationHandler for App {
 
                 };
 
+                let gpu_state = match self.get_gpu_state() {
+                    Some(t) => t,
+                    None => return
+                };
+
                 let width: usize = size.width as usize;
                 let height: usize = size.height as usize;
                 
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
                 
-                let surface = self.surface.as_mut().unwrap();
-                surface.resize(width_nzu32, height_nzu32).expect("Failed to resize surface");
+                // let surface = self.surface.as_mut().unwrap();
+                // surface.resize(width_nzu32, height_nzu32).expect("Failed to resize surface");
                 
-                let mut buf = surface.buffer_mut().expect("Failed to get buffer");
+                // let mut buf = surface.buffer_mut().expect("Failed to get buffer");
                 
-                let mut threads = vec![];
+                // let mut threads = vec![];
 
-                for i in 0..THREAD_COUNT {
-                    let player_ref = Arc::clone(&self.player);
-                    let objects_ref = Arc::clone(&self.objects);
+                // for i in 0..THREAD_COUNT {
+                //     let player_ref = Arc::clone(&self.player);
+                //     let objects_ref = Arc::clone(&self.objects);
 
-                    threads.push(thread::spawn(move || {
-                        let strip_start = (height / THREAD_COUNT) * i;
-                        let strip_end = if i == THREAD_COUNT - 1 {
-                            height  // last thread takes any leftover rows
-                        } else {
-                            (height / THREAD_COUNT) * (i + 1)
-                        };
-                        let strip_height = strip_end - strip_start;
+                //     threads.push(thread::spawn(move || {
+                //         let strip_start = (height / THREAD_COUNT) * i;
+                //         let strip_end = if i == THREAD_COUNT - 1 {
+                //             height  // last thread takes any leftover rows
+                //         } else {
+                //             (height / THREAD_COUNT) * (i + 1)
+                //         };
+                //         let strip_height = strip_end - strip_start;
 
-                        let mut pixels: Vec<u32> = vec![0; width * strip_height];
-                        let player_read = player_ref.read().unwrap();
+                //         let mut pixels: Vec<u32> = vec![0; width * strip_height];
+                //         let player_read = player_ref.read().unwrap();
 
-                        for x in 0..width {
-                            for y in strip_start..strip_end {
-                                pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64);
-                            }
-                        }
+                //         for x in 0..width {
+                //             for y in strip_start..strip_end {
+                //                 pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64);
+                //             }
+                //         }
 
-                        pixels
-                    }));
-                }
+                //         pixels
+                //     }));
+                // }
 
-                let mut pixels: Vec<u32> = Vec::with_capacity(width*height);
+                // let mut pixels: Vec<u32> = Vec::with_capacity(width*height);
 
-                for thread in threads.drain(0..threads.len()) {
-                    pixels.extend(thread.join().unwrap());
-                }
+                // for thread in threads.drain(0..threads.len()) {
+                //     pixels.extend(thread.join().unwrap());
+                // }
 
-                buf.copy_from_slice(&pixels);
+                // buf.copy_from_slice(&pixels);
 
-                buf.present().expect("Failed to present buffer");
+                // buf.present().expect("Failed to present buffer");
 
-                let player_mut = self.player.read().unwrap();
+                let player = self.player.read().unwrap();
 
                 if self.statistics_timer.elapsed().as_millis() >= 1000 {
                     self.average_fps = {
@@ -271,7 +338,7 @@ impl ApplicationHandler for App {
                 self.deltatime_over_last_second.push(self.deltatime*1000.0);
 
                 print!("\x1B[2J\x1B[1;1H");
-                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.average_fps, self.average_deltatime, player_mut.get_camera().pos(), player_mut.get_rotation());
+                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.average_fps, self.average_deltatime, player.get_camera().pos(), player.get_rotation());
             }
 
             WindowEvent::Resized(_) => {
@@ -322,15 +389,15 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, Box::new(material::Debug::new()))),
         Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, Box::new(material::Debug::new()))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00333333)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Debug::new()))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00333333)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Debug::new()))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00880000)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00008800)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00000088)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00880000)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00008800)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00000088)))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00FFFFFF)))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00000000)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00FFFFFF)))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00000000)))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, Box::new(material::StaticColor::new(0x000000FF)))),
 
 
@@ -351,3 +418,171 @@ fn main() {
     event_loop.run_app(&mut app).expect("Event loop failed");
 }
 
+
+
+// vibecoded but man thats a lot
+async fn init_wgpu(window: &Window, width: u32, height: u32) -> (
+    wgpu::Device,
+    wgpu::Queue,
+    wgpu::Surface,
+    wgpu::SurfaceConfiguration,
+    wgpu::ComputePipeline,
+    wgpu::RenderPipeline,
+    wgpu::BindGroup,
+    wgpu::Buffer, // camera
+    wgpu::Buffer, // spheres
+    wgpu::Buffer, // output
+) {
+    let instance = wgpu::Instance::default();
+    let surface = instance.create_surface(window).unwrap();
+
+    let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        compatible_surface: Some(&surface),
+        force_fallback_adapter: false,
+    }).await.unwrap();
+
+    let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
+        label: None,
+        required_features: wgpu::Features::empty(),
+        required_limits: wgpu::Limits::default(),
+        memory_hints: wgpu::MemoryHints::default(),
+    }, None).await.unwrap();
+
+    let surface_config = wgpu::SurfaceConfiguration {
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        format: wgpu::TextureFormat::Bgra8Unorm,
+        width,
+        height,
+        present_mode: wgpu::PresentMode::Fifo,
+        alpha_mode: wgpu::CompositeAlphaMode::Auto,
+        view_formats: vec![],
+        desired_maximum_frame_latency: 2,
+    };
+    surface.configure(&device, &surface_config);
+
+    // --- buffers ---
+
+    let camera_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("camera"),
+        size: std::mem::size_of::<object::camera::GpuCamera>() as u64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+
+    let spheres_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("spheres"),
+        size: (std::mem::size_of::<object::sphere::GpuSphere>() * 512) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+
+    // output buffer — one u32 per pixel
+    let output_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("output"),
+        size: (width * height * 4) as u64, // 4 bytes per pixel
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+        mapped_at_creation: false,
+    });
+
+    // --- pipelines ---
+
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        label: Some("raytracer"),
+        source: wgpu::ShaderSource::Wgsl(include_str!("./../src/shader.wgsl").into()),
+    });
+
+    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: None,
+        entries: &[
+            // camera
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::COMPUTE | wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+            // spheres
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+            // output
+            wgpu::BindGroupLayoutEntry {
+                binding: 2,
+                visibility: wgpu::ShaderStages::COMPUTE | wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+        ],
+    });
+
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: None,
+        layout: &bind_group_layout,
+        entries: &[
+            wgpu::BindGroupEntry { binding: 0, resource: camera_buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: spheres_buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: output_buf.as_entire_binding() },
+        ],
+    });
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: None,
+        bind_group_layouts: &[&bind_group_layout],
+        push_constant_ranges: &[],
+    });
+
+    let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        label: Some("compute"),
+        layout: Some(&pipeline_layout),
+        module: &shader,
+        entry_point: Some("main"),
+        compilation_options: Default::default(),
+        cache: None,
+    });
+
+    // minimal render pipeline — just blits the output buffer to screen
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("blit"),
+        layout: Some(&pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: Some("vs_main"),
+            buffers: &[],
+            compilation_options: Default::default(),
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: Some("fs_main"),
+            targets: &[Some(wgpu::ColorTargetState {
+                format: surface_config.format,
+                blend: None,
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+            compilation_options: Default::default(),
+        }),
+        primitive: wgpu::PrimitiveState::default(),
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState::default(),
+        multiview: None,
+        cache: None,
+    });
+
+    (device, queue, surface, surface_config, compute_pipeline,
+     render_pipeline, bind_group, camera_buf, spheres_buf, output_buf)
+}
