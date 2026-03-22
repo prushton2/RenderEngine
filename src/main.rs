@@ -545,7 +545,7 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[Some(&bind_group_layout)],
-        // push_constant_ranges: &[],
+        immediate_size: 0
     });
 
     let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -580,7 +580,7 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         primitive: wgpu::PrimitiveState::default(),
         depth_stencil: None,
         multisample: wgpu::MultisampleState::default(),
-        // multiview: None,
+        multiview_mask: None,
         cache: None,
     });
 
