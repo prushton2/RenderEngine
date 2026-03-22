@@ -4,13 +4,13 @@ use bytemuck;
 
 use crate::ds;
 use crate::object::{Renderable, renderable::ToGpu};
-use crate::material::{Materialable, Material};
+// use crate::material::{Materialable, Material};
 
 pub struct Sphere {
     center: ds::Vector3,
     radius: f64,
     // bbox: ds::Aabb,
-    material: Box<dyn Material>
+    // material: Box<dyn Material>
 }
 
 #[repr(C)]
@@ -21,11 +21,11 @@ pub struct GpuSphere {
 }
 
 impl Sphere {
-    pub fn new(center: &ds::Vector3, radius: f64, material: Box<dyn Material>) -> Self {
+    pub fn new(center: &ds::Vector3, radius: f64) -> Self {
         Self {
             center: center.clone(),
             radius: radius,
-            material: material
+            // material: material
             // bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
         }
     }
@@ -67,16 +67,16 @@ impl ToGpu<GpuSphere> for Sphere {
     }
 }
 
-impl Materialable for Sphere {
-    fn get_material(&self) -> &dyn Material {
-        return self.material.as_ref();
-    }
+// impl Materialable for Sphere {
+//     fn get_material(&self) -> &dyn Material {
+//         return self.material.as_ref();
+//     }
     
-    fn height(&self) -> f64 {
-        return self.radius * 2.0;
-    }
+//     fn height(&self) -> f64 {
+//         return self.radius * 2.0;
+//     }
 
-    fn center(&self) -> ds::Vector3 {
-        return self.center;
-    }
-}
+//     fn center(&self) -> ds::Vector3 {
+//         return self.center;
+//     }
+// }

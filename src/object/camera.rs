@@ -19,10 +19,21 @@ pub struct Camera {
     pixel00_loc: ds::Vector3,
 }
 
-pub struct GpuCamera {
-    pixel00_loc: [f32; 3],
-    pixel_delta_w: [f32; 3],
-    pixel_delta_h: [f32; 3],
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct GpuUniform {
+    pub pos:           [f32; 3],
+    pub _pad0:         f32,      // pad vec3 to 16 bytes
+    pub pixel00_loc:   [f32; 3],
+    pub _pad1:         f32,
+    pub pixel_delta_w: [f32; 3],
+    pub _pad2:         f32,
+    pub pixel_delta_h: [f32; 3],
+    pub _pad3:         f32,
+    pub width:         u32,
+    pub height:        u32,
+    pub sphere_count:  u32,
+    pub _pad4:         u32,      // pad to multiple of 16
 }
 
 impl Camera {
@@ -107,11 +118,20 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
     }
 
-    pub fn to_gpu(&self) -> GpuCamera {
-        GpuCamera {
+    pub fn to_gpu(&self) -> GpuUniform {
+        GpuUniform {
+            pos:           [self.pos.x as f32, self.pos.y as f32, self.pos.z as f32],
+            _pad0: 0.0,
             pixel00_loc:   [self.pixel00_loc.x as f32, self.pixel00_loc.y as f32, self.pixel00_loc.z as f32],
+            _pad1: 0.0,
             pixel_delta_w: [self.pixel_delta_w.x as f32, self.pixel_delta_w.y as f32, self.pixel_delta_w.z as f32],
-            pixel_delta_h: [self.pixel_delta_h.x as f32, self.pixel_delta_h.y as f32, self.pixel_delta_h.z as f32]
+            _pad2: 0.0,
+            pixel_delta_h: [self.pixel_delta_h.x as f32, self.pixel_delta_h.y as f32, self.pixel_delta_h.z as f32],
+            _pad3: 0.0,
+            width: self.window_dimensions.0 as u32,
+            height: self.window_dimensions.1 as u32,
+            sphere_count: 0,
+            _pad4: 0,
         }
     }
 

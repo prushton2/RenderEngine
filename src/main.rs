@@ -3,6 +3,7 @@ use std::num::NonZeroU32;
 use std::thread;
 use std::sync::{Arc, RwLock};
 
+use downcast_rs::Downcast;
 use softbuffer::{Context, Surface};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
@@ -11,8 +12,9 @@ use winit::window::{Window, WindowId, CursorGrabMode};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::object::Renderable;
+use crate::object::renderable::ToGpu;
 
-mod material;
+// mod material;
 mod object;
 mod ds;
 
@@ -34,7 +36,7 @@ struct App {
     compute_pipeline: Option<wgpu::ComputePipeline>,
     render_pipeline:  Option<wgpu::RenderPipeline>,
     bind_group:       Option<wgpu::BindGroup>,
-    camera_buf:       Option<wgpu::Buffer>,
+    uniform_buf:      Option<wgpu::Buffer>,
     spheres_buf:      Option<wgpu::Buffer>,
     // quads_buf:        Option<wgpu::Buffer>,
     output_buf:       Option<wgpu::Buffer>,
@@ -66,7 +68,7 @@ struct GpuState<'a> { // makes my life infinitely easier
     compute_pipeline: &'a wgpu::ComputePipeline,
     render_pipeline:  &'a wgpu::RenderPipeline,
     bind_group:       &'a wgpu::BindGroup,
-    camera_buf:       &'a wgpu::Buffer,
+    uniform_buf:      &'a wgpu::Buffer,
     spheres_buf:      &'a wgpu::Buffer,
     output_buf:       &'a wgpu::Buffer,
 }
@@ -116,7 +118,86 @@ impl App {
         player_ref.update_outputs();
     }
 
-    fn get_gpu_state(&self) -> Option<GpuState> {
+    pub fn render(&self) {
+        let gpu = self.get_gpu_state().unwrap();
+        let player = self.player.read().unwrap();
+
+        // upload uniforms
+        let mut uniforms = player.get_camera().to_gpu();
+
+        let gpu_spheres: Vec<object::sphere::GpuSphere> = self.objects.iter()
+            .filter_map(|o| o.as_any().downcast_ref::<object::Sphere>())
+            .map(|s| s.to_gpu())
+            .collect();
+        
+        uniforms.sphere_count = gpu_spheres.len() as u32;
+            
+        gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(&uniforms));
+        
+        gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(&gpu_spheres));
+
+        let frame = match gpu.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(f) => f,
+            wgpu::CurrentSurfaceTexture::Outdated
+            | wgpu::CurrentSurfaceTexture::Lost => {
+                // no frame acquired yet so safe to reconfigure
+                gpu.surface.configure(gpu.device, gpu.surface_config);
+                return;
+            }
+            _ => return,
+        };
+
+        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("frame")
+        });
+
+        // step 1 — compute pass, ray traces into output[]
+        {
+            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("raytrace"),
+                timestamp_writes: None
+            });
+            pass.set_pipeline(gpu.compute_pipeline);
+            pass.set_bind_group(0, gpu.bind_group, &[]);
+            pass.dispatch_workgroups(
+                (gpu.surface_config.width  + 7) / 8,
+                (gpu.surface_config.height + 7) / 8,
+                1
+            );
+        }
+
+        // step 2 — render pass, copies output[] to screen
+        {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("blit"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    depth_slice: None,
+                    ops: wgpu::Operations {
+                        load:  wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
+            });
+            pass.set_pipeline(gpu.render_pipeline);
+            pass.set_bind_group(0, gpu.bind_group, &[]);
+            pass.draw(0..3, 0..1);
+        }
+
+        // submit both passes and present
+        gpu.queue.submit(std::iter::once(encoder.finish()));
+        frame.present();
+        
+    }
+
+    fn get_gpu_state(&self) -> Option<GpuState<'_>> {
         Some(
             GpuState {
                 device:           self.device.as_ref()?,
@@ -126,7 +207,7 @@ impl App {
                 compute_pipeline: self.compute_pipeline.as_ref()?,
                 render_pipeline:  self.render_pipeline.as_ref()?,
                 bind_group:       self.bind_group.as_ref()?,
-                camera_buf:       self.camera_buf.as_ref()?,
+                uniform_buf:      self.uniform_buf.as_ref()?,
                 spheres_buf:      self.spheres_buf.as_ref()?,
                 // quads_buf:        self.quads_buf.as_ref()?,
                 output_buf:       self.output_buf.as_ref()?,
@@ -146,7 +227,7 @@ impl Default for App {
             compute_pipeline: None,
             render_pipeline:  None,
             bind_group:       None,
-            camera_buf:       None,
+            uniform_buf:       None,
             spheres_buf:      None,
             output_buf:       None,
 
@@ -186,7 +267,7 @@ impl ApplicationHandler for App {
         // wgpu init is async but resumed() isn't — use pollster to block
         let (device, queue, surface, surface_config,
             compute_pipeline, render_pipeline,
-            bind_group, camera_buf, spheres_buf, output_buf
+            bind_group, uniform_buf, spheres_buf, output_buf
         ) = pollster::block_on(init_wgpu(window.clone(), WIDTH as u32, HEIGHT as u32));
 
         self.window           = Some(window);
@@ -197,7 +278,7 @@ impl ApplicationHandler for App {
         self.compute_pipeline = Some(compute_pipeline);
         self.render_pipeline  = Some(render_pipeline);
         self.bind_group       = Some(bind_group);
-        self.camera_buf       = Some(camera_buf);
+        self.uniform_buf      = Some(uniform_buf);
         self.spheres_buf      = Some(spheres_buf);
         self.output_buf       = Some(output_buf);
     }
@@ -265,50 +346,9 @@ impl ApplicationHandler for App {
                 
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
+
+                self.render();
                 
-                // let surface = self.surface.as_mut().unwrap();
-                // surface.resize(width_nzu32, height_nzu32).expect("Failed to resize surface");
-                
-                // let mut buf = surface.buffer_mut().expect("Failed to get buffer");
-                
-                // let mut threads = vec![];
-
-                // for i in 0..THREAD_COUNT {
-                //     let player_ref = Arc::clone(&self.player);
-                //     let objects_ref = Arc::clone(&self.objects);
-
-                //     threads.push(thread::spawn(move || {
-                //         let strip_start = (height / THREAD_COUNT) * i;
-                //         let strip_end = if i == THREAD_COUNT - 1 {
-                //             height  // last thread takes any leftover rows
-                //         } else {
-                //             (height / THREAD_COUNT) * (i + 1)
-                //         };
-                //         let strip_height = strip_end - strip_start;
-
-                //         let mut pixels: Vec<u32> = vec![0; width * strip_height];
-                //         let player_read = player_ref.read().unwrap();
-
-                //         for x in 0..width {
-                //             for y in strip_start..strip_end {
-                //                 pixels[(y - strip_start) * width + x] = player_read.get_camera().get_pixel_color(objects_ref.as_ref(), x as f64, y as f64);
-                //             }
-                //         }
-
-                //         pixels
-                //     }));
-                // }
-
-                // let mut pixels: Vec<u32> = Vec::with_capacity(width*height);
-
-                // for thread in threads.drain(0..threads.len()) {
-                //     pixels.extend(thread.join().unwrap());
-                // }
-
-                // buf.copy_from_slice(&pixels);
-
-                // buf.present().expect("Failed to present buffer");
-
                 let player = self.player.read().unwrap();
 
                 if self.statistics_timer.elapsed().as_millis() >= 1000 {
@@ -382,11 +422,11 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5, Box::new(material::Molly::new(0.5, 1.0)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5)),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, Box::new(material::Debug::new()))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, Box::new(material::Debug::new()))),
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, Box::new(material::Debug::new()))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5)),
 
         // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Translucent::new(0x00333333)))),
         // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Debug::new()))),
@@ -397,14 +437,14 @@ fn main() {
 
         // Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00FFFFFF)))),
         // Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), Box::new(material::Mirror::new(0x00000000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, Box::new(material::StaticColor::new(0x000000FF)))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1)),
 
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, Box::new(material::StaticColor::new(0x00FF0000)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, Box::new(material::StaticColor::new(0x000000FF)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, Box::new(material::Absorb::new(0x00FFFFFF)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, Box::new(material::StaticColor::new(0x0000FF00)))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, Box::new(material::Translucent::new(0x00333333))))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5))
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
@@ -464,9 +504,9 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     // --- buffers ---
 
-    let camera_buf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("camera"),
-        size: std::mem::size_of::<object::camera::GpuCamera>() as u64,
+    let uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("uniform"),
+        size: std::mem::size_of::<object::camera::GpuUniform>() as u64,
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
@@ -536,7 +576,7 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         label: None,
         layout: &bind_group_layout,
         entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: camera_buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 0, resource: uniform_buf.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 1, resource: spheres_buf.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 2, resource: output_buf.as_entire_binding() },
         ],
@@ -585,5 +625,5 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
     });
 
     (device, queue, surface, surface_config, compute_pipeline,
-     render_pipeline, bind_group, camera_buf, spheres_buf, output_buf)
+     render_pipeline, bind_group, uniform_buf, spheres_buf, output_buf)
 }

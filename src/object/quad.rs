@@ -1,6 +1,6 @@
 use crate::ds;
 use crate::object::{Renderable, renderable::ToGpu};
-use crate::material::{Materialable, Material};
+// use crate::material::{Materialable, Material};
 
 pub struct Quad {
     q: ds::Vector3,
@@ -9,7 +9,7 @@ pub struct Quad {
     d: f64,
     normal: ds::Vector3,
     // bbox: ds::Aabb
-    material: Box<dyn Material>
+    // material: Box<dyn Material>
 }
 
 pub struct GpuQuad {
@@ -17,7 +17,7 @@ pub struct GpuQuad {
 }
 
 impl Quad {
-    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3, material: Box<dyn Material>) -> Self {
+    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3,) -> Self {
         Self {
             q: *q,
             u: *u,
@@ -28,7 +28,7 @@ impl Quad {
             // ),
             normal: u.cross(&v).unit_vector(),
             d: u.cross(&v).unit_vector().dot(q),
-            material: material
+            // material: material
         }
     }
 }
@@ -75,16 +75,16 @@ impl ToGpu<GpuQuad> for Quad {
 }
 
 
-impl Materialable for Quad {
-    fn get_material(&self) -> &dyn Material {
-        return self.material.as_ref();
-    }
+// impl Materialable for Quad {
+//     fn get_material(&self) -> &dyn Material {
+//         return self.material.as_ref();
+//     }
     
-    fn height(&self) -> f64 {
-        return self.v.length();
-    }
+//     fn height(&self) -> f64 {
+//         return self.v.length();
+//     }
 
-    fn center(&self) -> ds::Vector3 {
-        return self.q + self.v/2.0 + self.u/2.0;
-    }
-}
+//     fn center(&self) -> ds::Vector3 {
+//         return self.q + self.v/2.0 + self.u/2.0;
+//     }
+// }

@@ -9,6 +9,7 @@ resolver = "2"
 [dependencies]
 auto_ops = "0.3.0"
 bytemuck = "1.25.0"
+downcast-rs = "2.0.2"
 pollster = "0.4.0"
 rand = "0.10.0"
 softbuffer = "0.4.8"
