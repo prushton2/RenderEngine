@@ -101,49 +101,49 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
     }
 
-    pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
-        let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
-        let ray_direction = pixel_center - self.pos();
-        let ray = ds::Ray::new(&self.pos(), &ray_direction);
+    // pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
+    //     let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
+    //     let ray_direction = pixel_center - self.pos();
+    //     let ray = ds::Ray::new(&self.pos(), &ray_direction);
 
-        return self.ray_color(world, &ray, 6).to_u32();
-    }
+    //     return self.ray_color(world, &ray, 6).to_u32();
+    // }
 
-    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> ds::Color {
-        let mut lowest_distance: Option<f64> = None;
-        let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
+    // pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> ds::Color {
+    //     let mut lowest_distance: Option<f64> = None;
+    //     let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
 
-        let mut g_surface_pos: ds::Vector3 = ds::Vector3::zero();
-        let mut g_t: f64 = 0.0;
+    //     let mut g_surface_pos: ds::Vector3 = ds::Vector3::zero();
+    //     let mut g_t: f64 = 0.0;
 
         
-        if depth <= 0 {
-            return ds::Color::from_u32(0x00BADBED);
-        }
+    //     if depth <= 0 {
+    //         return ds::Color::from_u32(0x00BADBED);
+    //     }
 
-        for renderable in world {
-            let intersects = renderable.intersects(&ray);
-            if intersects.is_none() || intersects.unwrap() < 0.0 {
-                continue;
-            }
+    //     for renderable in world {
+    //         let intersects = Some(8.0); //renderable.intersects(&ray);
+    //         if intersects.is_none() || intersects.unwrap() < 0.0 {
+    //             continue;
+    //         }
 
-            let t = intersects.unwrap();
-            let surface_pos = ray.at(t);
-            let len_sq = (surface_pos - ray.origin).length_sq();
+    //         let t = intersects.unwrap();
+    //         let surface_pos = ray.at(t);
+    //         let len_sq = (surface_pos - ray.origin).length_sq();
 
-            if lowest_distance.is_none() || len_sq < lowest_distance.unwrap() {
-                lowest_distance = Some(len_sq);
-                closest_object = Some(renderable.as_ref());
-                g_surface_pos = surface_pos;
-                g_t = t;
-            }
-        }
+    //         if lowest_distance.is_none() || len_sq < lowest_distance.unwrap() {
+    //             lowest_distance = Some(len_sq);
+    //             closest_object = Some(renderable.as_ref());
+    //             g_surface_pos = surface_pos;
+    //             g_t = t;
+    //         }
+    //     }
 
-        return match closest_object {
-            None => ds::Color::from_u32(0x00BADBED),
-            Some(obj) => obj.get_material().ray_color(&self, obj, world, ray, g_t, &g_surface_pos, depth-1)
-        };
-    }
+    //     return match closest_object {
+    //         None => ds::Color::from_u32(0x00BADBED),
+    //         Some(obj) => obj.get_material().ray_color(&self, obj, world, ray, g_t, &g_surface_pos, depth-1)
+    //     };
+    // }
 
     // pub fn set_pos(&mut self, pos: ds::Vector3) {
     //     self.pos = pos;

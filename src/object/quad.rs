@@ -1,5 +1,5 @@
 use crate::ds;
-use crate::object::Renderable;
+use crate::object::{Renderable, renderable::ToGpu};
 use crate::material::{Materialable, Material};
 
 pub struct Quad {
@@ -10,6 +10,10 @@ pub struct Quad {
     normal: ds::Vector3,
     // bbox: ds::Aabb
     material: Box<dyn Material>
+}
+
+pub struct GpuQuad {
+
 }
 
 impl Quad {
@@ -30,32 +34,32 @@ impl Quad {
 }
 
 impl Renderable for Quad {
-    fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
-        let denominator = self.normal.dot(&ray.direction);
+    // fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
+    //     let denominator = self.normal.dot(&ray.direction);
         
-        if denominator.abs() <= 0.00000001 {
-            return None
-        }
+    //     if denominator.abs() <= 0.00000001 {
+    //         return None
+    //     }
 
-        let t = (self.d - self.normal.dot(&ray.origin))/denominator;
+    //     let t = (self.d - self.normal.dot(&ray.origin))/denominator;
 
-        // Compute the hit point, then express it relative to quad corner q
-        let intersection = ray.at(t);
-        let planar_hit = intersection - self.q;
+    //     // Compute the hit point, then express it relative to quad corner q
+    //     let intersection = ray.at(t);
+    //     let planar_hit = intersection - self.q;
 
-        // Project onto u and v axes using their squared lengths
-        let u_len_sq = self.u.length_sq();
-        let v_len_sq = self.v.length_sq();
+    //     // Project onto u and v axes using their squared lengths
+    //     let u_len_sq = self.u.length_sq();
+    //     let v_len_sq = self.v.length_sq();
 
-        let alpha = self.u.dot(&planar_hit) / u_len_sq;
-        let beta  = self.v.dot(&planar_hit) / v_len_sq;
+    //     let alpha = self.u.dot(&planar_hit) / u_len_sq;
+    //     let beta  = self.v.dot(&planar_hit) / v_len_sq;
 
-        if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
-            return None;
-        }
+    //     if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
+    //         return None;
+    //     }
 
-        return Some(t)
-    }
+    //     return Some(t)
+    // }
 
     fn hit_record(&self, _ray: &ds::Ray, _intersection: f64) -> ds::HitRecord {
         ds::HitRecord {
@@ -63,6 +67,13 @@ impl Renderable for Quad {
         }
     }
 }
+
+impl ToGpu<GpuQuad> for Quad {
+    fn to_gpu(&self) -> GpuQuad {
+        GpuQuad {}
+    }
+}
+
 
 impl Materialable for Quad {
     fn get_material(&self) -> &dyn Material {
