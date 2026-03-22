@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::num::NonZeroU32;
-use std::rc::Rc;
 use std::thread;
 use std::sync::{Arc, RwLock};
 
@@ -25,7 +24,7 @@ const SPEED: f64 = 1.5;
 
 struct App {
     // window
-    window: Option<Rc<Window>>,
+    window: Option<Arc<Window>>,
 
     // wgpu (set in resumed, always Some after that)
     device:           Option<wgpu::Device>,
@@ -171,7 +170,7 @@ impl Default for App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = Rc::new(
+        let window = Arc::new(
             event_loop.create_window(
                 Window::default_attributes()
                     .with_title("Render Engine")
@@ -188,7 +187,7 @@ impl ApplicationHandler for App {
         let (device, queue, surface, surface_config,
             compute_pipeline, render_pipeline,
             bind_group, camera_buf, spheres_buf, output_buf
-        ) = pollster::block_on(init_wgpu(window, WIDTH as u32, HEIGHT as u32));
+        ) = pollster::block_on(init_wgpu(window.clone(), WIDTH as u32, HEIGHT as u32));
 
         self.window           = Some(window);
         self.device           = Some(device);
@@ -421,10 +420,10 @@ fn main() {
 
 
 // vibecoded but man thats a lot
-async fn init_wgpu(window: &Window, width: u32, height: u32) -> (
+async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
     wgpu::Device,
     wgpu::Queue,
-    wgpu::Surface,
+    wgpu::Surface<'static>,
     wgpu::SurfaceConfiguration,
     wgpu::ComputePipeline,
     wgpu::RenderPipeline,
@@ -447,7 +446,9 @@ async fn init_wgpu(window: &Window, width: u32, height: u32) -> (
         required_features: wgpu::Features::empty(),
         required_limits: wgpu::Limits::default(),
         memory_hints: wgpu::MemoryHints::default(),
-    }, None).await.unwrap();
+        experimental_features: wgpu::ExperimentalFeatures::disabled(),
+        trace: wgpu::Trace::Off
+    }).await.unwrap();
 
     let surface_config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -543,8 +544,8 @@ async fn init_wgpu(window: &Window, width: u32, height: u32) -> (
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        // push_constant_ranges: &[],
     });
 
     let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -579,7 +580,7 @@ async fn init_wgpu(window: &Window, width: u32, height: u32) -> (
         primitive: wgpu::PrimitiveState::default(),
         depth_stencil: None,
         multisample: wgpu::MultisampleState::default(),
-        multiview: None,
+        // multiview: None,
         cache: None,
     });
 

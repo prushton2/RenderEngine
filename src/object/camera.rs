@@ -109,9 +109,9 @@ impl Camera {
 
     pub fn to_gpu(&self) -> GpuCamera {
         GpuCamera {
-            pixel00_loc: self.pixel00_loc,
-            pixel_delta_w: self.pixel_delta_w,
-            pixel_delta_h: self.pixel_delta_h
+            pixel00_loc:   [self.pixel00_loc.x as f32, self.pixel00_loc.y as f32, self.pixel00_loc.z as f32],
+            pixel_delta_w: [self.pixel_delta_w.x as f32, self.pixel_delta_w.y as f32, self.pixel_delta_w.z as f32],
+            pixel_delta_h: [self.pixel_delta_h.x as f32, self.pixel_delta_h.y as f32, self.pixel_delta_h.z as f32]
         }
     }
 
