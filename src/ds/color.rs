@@ -2,17 +2,17 @@ use auto_ops::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-    r: u8,
-    g: u8,
-    b: u8
+    r: f64,
+    g: f64,
+    b: f64
 }
 
 impl Color {
     pub fn from_u32(c: u32) -> Self {
         Self {
-            r: (c >> 16) as u8,
-            g: (c >> 8) as u8,
-            b: c as u8
+            r: (c >> 16) as f64,
+            g: ((c >> 8) & 255) as f64,
+            b: (c & 255) as f64
         }
     }
 
@@ -22,9 +22,9 @@ impl Color {
 
     pub fn blend(&self, b: Color) -> Color {
         Color {
-            r: ((self.r as u16 + b.r as u16) / 2) as u8,
-            g: ((self.g as u16 + b.g as u16) / 2) as u8,
-            b: ((self.b as u16 + b.b as u16) / 2) as u8,
+            r: ((self.r + b.r) / 2.0),
+            g: ((self.g + b.g) / 2.0),
+            b: ((self.b + b.b) / 2.0),
         }
     }
 }
@@ -64,32 +64,48 @@ impl_op_ex!(/ |a: &Color, b: &Color| -> Color{
 
 impl_op_ex_commutative!(+ |a: &Color, b: &u32| -> Color{
     Color{
-        r: (a.r as u32 + b) as u8,
-        g: (a.g as u32 + b) as u8,
-        b: (a.b as u32 + b) as u8
+        r: (a.r + *b as f64),
+        g: (a.g + *b as f64),
+        b: (a.b + *b as f64)
     }
 });
 
 impl_op_ex_commutative!(- |a: &Color, b: &u32| -> Color{
     Color{
-        r: (a.r as u32 - b) as u8,
-        g: (a.g as u32 - b) as u8,
-        b: (a.b as u32 - b) as u8
+        r: (a.r - *b as f64),
+        g: (a.g - *b as f64),
+        b: (a.b - *b as f64)
     }
 });
 
 impl_op_ex_commutative!(* |a: &Color, b: &u32| -> Color{
     Color{
-        r: (a.r as u32 * b) as u8,
-        g: (a.g as u32 * b) as u8,
-        b: (a.b as u32 * b) as u8
+        r: (a.r * *b as f64),
+        g: (a.g * *b as f64),
+        b: (a.b * *b as f64)
     }
 });
 
 impl_op_ex_commutative!(/ |a: &Color, b: &u32| -> Color{
     Color{
-        r: (a.r as u32 / b) as u8,
-        g: (a.g as u32 / b) as u8,
-        b: (a.b as u32 / b) as u8
+        r: (a.r / *b as f64),
+        g: (a.g / *b as f64),
+        b: (a.b / *b as f64)
+    }
+});
+
+impl_op_ex_commutative!(/ |a: &Color, b: &f64| -> Color{
+    Color{
+        r: (a.r / b),
+        g: (a.g / b),
+        b: (a.b / b)
+    }
+});
+
+impl_op_ex_commutative!(* |a: &Color, b: &f64| -> Color{
+    Color{
+        r: (a.r * b),
+        g: (a.g * b),
+        b: (a.b * b)
     }
 });
