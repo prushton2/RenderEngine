@@ -1,5 +1,4 @@
-// use std::cmp;
-
+use std::any::Any;
 use bytemuck;
 
 use crate::ds;
@@ -19,6 +18,8 @@ pub struct GpuSphere {
     center: [f32; 3],
     radius: f32,
 }
+
+// impl Downcast for Sphere {}
 
 impl Sphere {
     pub fn new(center: &ds::Vector3, radius: f64) -> Self {
@@ -49,6 +50,9 @@ impl Renderable for Sphere {
     // }
 
 
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 
     fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::HitRecord {
         ds::HitRecord {

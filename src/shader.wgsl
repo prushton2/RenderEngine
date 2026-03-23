@@ -95,6 +95,15 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// @compute @workgroup_size(8, 8, 1)
+// fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+//     let x = gid.x;
+//     let y = gid.y;
+//     if x >= uniforms.width || y >= uniforms.height { return; }
+//     let idx = y * uniforms.width + x;
+//     output[idx] = 0x00FF0000u;
+// }
+
 @fragment
 fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let idx = u32(pos.y) * uniforms.width + u32(pos.x);

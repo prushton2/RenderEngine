@@ -1,10 +1,6 @@
 use std::collections::HashMap;
-use std::num::NonZeroU32;
-use std::thread;
 use std::sync::{Arc, RwLock};
 
-use downcast_rs::Downcast;
-use softbuffer::{Context, Surface};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -20,7 +16,6 @@ mod ds;
 
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
-const THREAD_COUNT: usize = 32;
 const SENSITIVITY: f64 = 0.001;
 const SPEED: f64 = 1.5;
 
@@ -53,10 +48,8 @@ struct App {
     last_frame:                 std::time::Instant,
     deltatime:                  f64,
 
-    fps_over_last_second:       Vec<f64>,
-    deltatime_over_last_second: Vec<f64>,
-    average_fps:                u32,
-    average_deltatime:          u32,
+    fps_stat:                   u32,
+    deltatime_stat:             u32,
     statistics_timer:           std::time::Instant,
 }
 
@@ -119,34 +112,46 @@ impl App {
     }
 
     pub fn render(&self) {
-        let gpu = self.get_gpu_state().unwrap();
+        let t0 = std::time::Instant::now();
+
+        let gpu = match self.get_gpu_state() {
+            Some(t) => t,
+            None => return
+        };
+
         let player = self.player.read().unwrap();
 
         // upload uniforms
         let mut uniforms = player.get_camera().to_gpu();
 
+        // println!("object count: {}", self.objects.len());
         let gpu_spheres: Vec<object::sphere::GpuSphere> = self.objects.iter()
             .filter_map(|o| o.as_any().downcast_ref::<object::Sphere>())
             .map(|s| s.to_gpu())
             .collect();
         
         uniforms.sphere_count = gpu_spheres.len() as u32;
-            
+        
+        println!("sending sphere_count={} to GPU", uniforms.sphere_count);
         gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(&uniforms));
         
         gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(&gpu_spheres));
+
+        let t1 = std::time::Instant::now();
 
         let frame = match gpu.surface.get_current_texture() {
             wgpu::CurrentSurfaceTexture::Success(f) => f,
             wgpu::CurrentSurfaceTexture::Outdated
             | wgpu::CurrentSurfaceTexture::Lost => {
-                // no frame acquired yet so safe to reconfigure
                 gpu.surface.configure(gpu.device, gpu.surface_config);
                 return;
             }
+            wgpu::CurrentSurfaceTexture::Timeout => {
+                return; // just skip the frame
+            }
             _ => return,
         };
-
+        
         let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -191,10 +196,18 @@ impl App {
             pass.draw(0..3, 0..1);
         }
 
+        let t2 = std::time::Instant::now();
+
         // submit both passes and present
-        gpu.queue.submit(std::iter::once(encoder.finish()));
+        // gpu.queue.submit(std::iter::once(encoder.finish()));
+        let _index = gpu.queue.submit(std::iter::once(encoder.finish()));
         frame.present();
         
+        let t3 = std::time::Instant::now();
+        
+        println!("upload={:?} acquire={:?} submit={:?}", t1-t0, t2-t1, t3-t2);
+        // self.device.as_ref().unwrap().poll(wgpu::PollType::Poll);        
+        self.device.as_ref().unwrap().poll(wgpu::PollType::wait_indefinitely());
     }
 
     fn get_gpu_state(&self) -> Option<GpuState<'_>> {
@@ -227,7 +240,7 @@ impl Default for App {
             compute_pipeline: None,
             render_pipeline:  None,
             bind_group:       None,
-            uniform_buf:       None,
+            uniform_buf:      None,
             spheres_buf:      None,
             output_buf:       None,
 
@@ -240,10 +253,8 @@ impl Default for App {
             last_frame:                 std::time::Instant::now(),
             deltatime:                  0.0,
 
-            fps_over_last_second:       vec![],
-            deltatime_over_last_second: vec![],
-            average_fps:                0,
-            average_deltatime:          0,
+            fps_stat:                   0,
+            deltatime_stat:             0,
             statistics_timer:           std::time::Instant::now(),
         }
     }
@@ -325,25 +336,6 @@ impl ApplicationHandler for App {
                 let window = self.window.as_ref().unwrap();
                 let size = window.inner_size();
                 
-                let width_nzu32 = match NonZeroU32::new(size.width) {
-                    Some(t) => t,
-                    None => return
-                };
-                
-                let height_nzu32 = match NonZeroU32::new(size.height) {
-                    Some(t) => t,
-                    None => return
-
-                };
-
-                let gpu_state = match self.get_gpu_state() {
-                    Some(t) => t,
-                    None => return
-                };
-
-                let width: usize = size.width as usize;
-                let height: usize = size.height as usize;
-                
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
 
@@ -352,32 +344,15 @@ impl ApplicationHandler for App {
                 let player = self.player.read().unwrap();
 
                 if self.statistics_timer.elapsed().as_millis() >= 1000 {
-                    self.average_fps = {
-                        let mut sum = 0.0;
-                        for i in &self.fps_over_last_second {
-                            sum += i;
-                        }
-                        sum/self.fps_over_last_second.len() as f64
-                    } as u32;
-
-                    self.average_deltatime = {
-                        let mut sum = 0.0;
-                        for i in &self.deltatime_over_last_second {
-                            sum += i;
-                        }
-                        sum/self.deltatime_over_last_second.len() as f64
-                    } as u32;
-
-                    self.fps_over_last_second.clear();
-                    self.deltatime_over_last_second.clear();
+                    self.fps_stat = (1.0/self.deltatime) as u32;
+                    self.deltatime_stat = (1000.0 * self.deltatime) as u32;
                     self.statistics_timer = std::time::Instant::now();
                 }
 
-                self.fps_over_last_second.push(1.0/self.deltatime);
-                self.deltatime_over_last_second.push(self.deltatime*1000.0);
-
                 print!("\x1B[2J\x1B[1;1H");
-                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.average_fps, self.average_deltatime, player.get_camera().pos(), player.get_rotation());
+                println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.fps_stat, self.deltatime_stat, player.get_camera().pos(), player.get_rotation());
+
+                // std::thread::sleep(std::time::Duration::from_millis(17));
             }
 
             WindowEvent::Resized(_) => {
@@ -410,6 +385,13 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
+    unsafe {
+        std::env::set_var("WGPU_VALIDATION", "1");
+        std::env::set_var("RUST_LOG", "wgpu_core=warn,wgpu_hal=warn");
+        
+    }
+    env_logger::init(); // add env_logger to Cargo.toml if not already there
+
     let camera = object::Camera::new(
         ds::Vector3::new(0.0, 0.0, 0.0),
         3.0,
@@ -481,6 +463,8 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         force_fallback_adapter: false,
     }).await.unwrap();
 
+    println!("adapter: {:?}", adapter.get_info());
+
     let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
         label: None,
         required_features: wgpu::Features::empty(),
@@ -495,10 +479,10 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         format: wgpu::TextureFormat::Bgra8Unorm,
         width,
         height,
-        present_mode: wgpu::PresentMode::Fifo,
+        present_mode: wgpu::PresentMode::AutoNoVsync,
         alpha_mode: wgpu::CompositeAlphaMode::Auto,
         view_formats: vec![],
-        desired_maximum_frame_latency: 2,
+        desired_maximum_frame_latency: 1,
     };
     surface.configure(&device, &surface_config);
 
@@ -554,7 +538,7 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Storage { read_only: true },
                     has_dynamic_offset: false,
-                    min_binding_size: None,
+                    min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<object::sphere::GpuSphere>() as u64),
                 },
                 count: None,
             },

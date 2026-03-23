@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use crate::ds;
 use crate::object::{Renderable, renderable::ToGpu};
 // use crate::material::{Materialable, Material};
@@ -60,6 +62,9 @@ impl Renderable for Quad {
 
     //     return Some(t)
     // }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 
     fn hit_record(&self, _ray: &ds::Ray, _intersection: f64) -> ds::HitRecord {
         ds::HitRecord {

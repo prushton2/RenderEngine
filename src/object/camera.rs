@@ -119,6 +119,7 @@ impl Camera {
     }
 
     pub fn to_gpu(&self) -> GpuUniform {
+        println!("to_gpu: pos={:?} pixel00_loc={:?}", self.pos, self.pixel00_loc);
         GpuUniform {
             pos:           [self.pos.x as f32, self.pos.y as f32, self.pos.z as f32],
             _pad0: 0.0,
