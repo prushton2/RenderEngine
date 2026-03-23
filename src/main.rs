@@ -10,7 +10,7 @@ use winit::keyboard::{KeyCode, PhysicalKey};
 use crate::object::Renderable;
 use crate::object::renderable::ToGpu;
 
-// mod material;
+mod material;
 mod object;
 mod ds;
 
