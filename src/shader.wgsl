@@ -10,12 +10,24 @@ struct Uniform {
     width:         u32,
     height:        u32,
     sphere_count:  u32,
-    _pad4:         u32
+    _pad4:         u32,
+    quad_count:    u32,
 }
 
 struct Sphere {
     center:   vec3<f32>,
     radius:   f32,
+}
+
+struct Quad {
+    q:       vec3<f32>,
+    _pad0:   f32,
+    u:       vec3<f32>,
+    _pad1:   f32,
+    v:       vec3<f32>,
+    d:       f32,
+    normal:  vec3<f32>,
+    _pad2:   f32,
 }
 
 struct HitRecord {
@@ -26,8 +38,9 @@ struct HitRecord {
 }
 
 @group(0) @binding(0) var<uniform>               uniforms:  Uniform;
-@group(0) @binding(1) var<storage, read>          spheres:  array<Sphere>;
-@group(0) @binding(2) var<storage, read_write>     output:  array<u32>;
+@group(0) @binding(1) var<storage, read_write>     output:  array<u32>;
+@group(0) @binding(2) var<storage, read>          spheres:  array<Sphere>;
+@group(0) @binding(3) var<storage, read>            quads:  array<Quad>;
 
 fn sphere_intersects(origin: vec3<f32>, dir: vec3<f32>, sphere: Sphere) -> f32 {
     let oc = sphere.center - origin;
@@ -45,6 +58,31 @@ fn sphere_intersects(origin: vec3<f32>, dir: vec3<f32>, sphere: Sphere) -> f32 {
     return min(t1, t2);
 }
 
+fn quad_intersects(origin: vec3<f32>, dir: vec3<f32>, quad: Quad) -> f32 {
+    let denominator = dot(quad.normal, dir);
+
+    if abs(denominator) < 0.00000001 {
+        return -1.0;
+    }
+
+    let t = (quad.d - dot(quad.normal, origin))/denominator;
+
+    let intersection = origin + dir * t;
+    let planar_hit = intersection - quad.q;
+
+    let u_len_sq = dot(quad.u, quad.u);
+    let v_len_sq = dot(quad.v, quad.v);
+
+    let alpha = dot(quad.u, planar_hit) / u_len_sq;
+    let beta = dot(quad.v, planar_hit) / v_len_sq;
+
+    if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
+        return -1.0;
+    }
+
+    return t;
+}
+
 fn closest_hit(origin: vec3<f32>, dir: vec3<f32>) -> HitRecord {
     var rec: HitRecord;
     rec.hit = false;
@@ -58,6 +96,17 @@ fn closest_hit(origin: vec3<f32>, dir: vec3<f32>) -> HitRecord {
             rec.t        = t;
             rec.position = origin + t * dir;
             rec.normal   = normalize(rec.position - spheres[i].center);
+        }
+    }
+
+    for (var i = 0u; i < uniforms.quad_count; i++) {
+        let t = quad_intersects(origin, dir, quads[i]);
+        if t > 0.001 && t < closest_t {
+            closest_t    = t;
+            rec.hit      = true;
+            rec.t        = t;
+            rec.position = origin + t * dir;
+            rec.normal   = quads[i].normal;
         }
     }
 
@@ -94,15 +143,6 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         output[idx] = 0x00BADBED;
     }
 }
-
-// @compute @workgroup_size(8, 8, 1)
-// fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-//     let x = gid.x;
-//     let y = gid.y;
-//     if x >= uniforms.width || y >= uniforms.height { return; }
-//     let idx = y * uniforms.width + x;
-//     output[idx] = 0x00FF0000u;
-// }
 
 @fragment
 fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {

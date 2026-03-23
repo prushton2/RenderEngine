@@ -34,7 +34,8 @@ pub struct GpuUniform {
     pub height:        u32,
     pub sphere_count:  u32,
     pub _pad4:         u32,
-    pub _pad5:         [u32; 44], // 80 + 176 = 256; should help fix things
+    pub quad_count:    u32,
+    pub _pad5:         [u32; 43], // pad to 256 bytes
 }
 
 impl Camera {
@@ -120,7 +121,6 @@ impl Camera {
     }
 
     pub fn to_gpu(&self) -> GpuUniform {
-        println!("to_gpu: pos={:?} pixel00_loc={:?}", self.pos, self.pixel00_loc);
         GpuUniform {
             pos:           [self.pos.x as f32, self.pos.y as f32, self.pos.z as f32],
             _pad0: 0.0,
@@ -134,7 +134,8 @@ impl Camera {
             height: self.window_dimensions.1 as u32,
             sphere_count: 0,
             _pad4: 0,
-            _pad5: [0u32; 44],
+            quad_count: 0,
+            _pad5: [0u32; 43],
         }
     }
 
