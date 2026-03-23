@@ -111,12 +111,12 @@ impl App {
         player_ref.update_outputs();
     }
 
-    pub fn render(&self) {
+    pub fn render(&self) -> Option<wgpu::SurfaceTexture> {
         let t0 = std::time::Instant::now();
 
         let gpu = match self.get_gpu_state() {
             Some(t) => t,
-            None => return
+            None => return None
         };
 
         let player = self.player.read().unwrap();
@@ -132,6 +132,7 @@ impl App {
         
         uniforms.sphere_count = gpu_spheres.len() as u32;
         
+        gpu.device.poll(wgpu::PollType::Poll);
         println!("sending sphere_count={} to GPU", uniforms.sphere_count);
         gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(&uniforms));
         
@@ -144,14 +145,14 @@ impl App {
             wgpu::CurrentSurfaceTexture::Outdated
             | wgpu::CurrentSurfaceTexture::Lost => {
                 gpu.surface.configure(gpu.device, gpu.surface_config);
-                return;
+                return None;
             }
             wgpu::CurrentSurfaceTexture::Timeout => {
-                return; // just skip the frame
+                return None; // just skip the frame
             }
-            _ => return,
+            _ => return None,
         };
-        
+
         let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -199,15 +200,11 @@ impl App {
         let t2 = std::time::Instant::now();
 
         // submit both passes and present
-        // gpu.queue.submit(std::iter::once(encoder.finish()));
-        let _index = gpu.queue.submit(std::iter::once(encoder.finish()));
-        frame.present();
+        gpu.queue.submit(std::iter::once(encoder.finish()));
         
         let t3 = std::time::Instant::now();
-        
         println!("upload={:?} acquire={:?} submit={:?}", t1-t0, t2-t1, t3-t2);
-        // self.device.as_ref().unwrap().poll(wgpu::PollType::Poll);        
-        self.device.as_ref().unwrap().poll(wgpu::PollType::wait_indefinitely());
+        return Some(frame)
     }
 
     fn get_gpu_state(&self) -> Option<GpuState<'_>> {
@@ -294,7 +291,10 @@ impl ApplicationHandler for App {
         self.output_buf       = Some(output_buf);
     }
 
-    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        event_loop.set_control_flow(ControlFlow::WaitUntil(
+            std::time::Instant::now() + std::time::Duration::from_millis(4) // ~250fps cap
+        ));
         if let Some(window) = &self.window {
             window.request_redraw();
         }
@@ -339,7 +339,9 @@ impl ApplicationHandler for App {
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
 
-                self.render();
+                if let Some(frame) = self.render() {
+                    frame.present();
+                }
                 
                 let player = self.player.read().unwrap();
 
@@ -351,7 +353,6 @@ impl ApplicationHandler for App {
 
                 print!("\x1B[2J\x1B[1;1H");
                 println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.fps_stat, self.deltatime_stat, player.get_camera().pos(), player.get_rotation());
-
                 // std::thread::sleep(std::time::Duration::from_millis(17));
             }
 
@@ -385,12 +386,13 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
-    unsafe {
-        std::env::set_var("WGPU_VALIDATION", "1");
-        std::env::set_var("RUST_LOG", "wgpu_core=warn,wgpu_hal=warn");
-        
-    }
-    env_logger::init(); // add env_logger to Cargo.toml if not already there
+    debug_assert_eq!(std::mem::size_of::<object::camera::GpuUniform>() % 256, 0);
+
+    // unsafe {
+    //     std::env::set_var("WGPU_VALIDATION", "1");
+    //     std::env::set_var("RUST_LOG", "wgpu_core=warn,wgpu_hal=warn");    
+    // }
+    // env_logger::init(); // add env_logger to Cargo.toml if not already there
 
     let camera = object::Camera::new(
         ds::Vector3::new(0.0, 0.0, 0.0),
@@ -430,7 +432,7 @@ fn main() {
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
-    event_loop.set_control_flow(ControlFlow::Poll);
+    event_loop.set_control_flow(ControlFlow::Wait);
 
     let mut app = App::default();
     app.consume_player(player);

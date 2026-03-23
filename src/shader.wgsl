@@ -10,7 +10,7 @@ struct Uniform {
     width:         u32,
     height:        u32,
     sphere_count:  u32,
-    _pad4:         u32,
+    _pad4:         u32
 }
 
 struct Sphere {

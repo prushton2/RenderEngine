@@ -23,7 +23,7 @@ pub struct Camera {
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct GpuUniform {
     pub pos:           [f32; 3],
-    pub _pad0:         f32,      // pad vec3 to 16 bytes
+    pub _pad0:         f32,
     pub pixel00_loc:   [f32; 3],
     pub _pad1:         f32,
     pub pixel_delta_w: [f32; 3],
@@ -33,11 +33,12 @@ pub struct GpuUniform {
     pub width:         u32,
     pub height:        u32,
     pub sphere_count:  u32,
-    pub _pad4:         u32,      // pad to multiple of 16
+    pub _pad4:         u32,
+    pub _pad5:         [u32; 44], // 80 + 176 = 256; should help fix things
 }
 
 impl Camera {
-    pub fn zero() -> Self { // irreedeemable
+    pub fn zero() -> Self { // Basically a zero to fill some needs for a "useless" implementation
         Self {
             pos: ds::Vector3::zero(),
             dir: ds::Vector3::zero(),
@@ -133,59 +134,9 @@ impl Camera {
             height: self.window_dimensions.1 as u32,
             sphere_count: 0,
             _pad4: 0,
+            _pad5: [0u32; 44],
         }
     }
-
-    // pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
-    //     let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
-    //     let ray_direction = pixel_center - self.pos();
-    //     let ray = ds::Ray::new(&self.pos(), &ray_direction);
-
-    //     return self.ray_color(world, &ray, 6).to_u32();
-    // }
-
-    // pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> ds::Color {
-    //     let mut lowest_distance: Option<f64> = None;
-    //     let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
-
-    //     let mut g_surface_pos: ds::Vector3 = ds::Vector3::zero();
-    //     let mut g_t: f64 = 0.0;
-
-        
-    //     if depth <= 0 {
-    //         return ds::Color::from_u32(0x00BADBED);
-    //     }
-
-    //     for renderable in world {
-    //         let intersects = Some(8.0); //renderable.intersects(&ray);
-    //         if intersects.is_none() || intersects.unwrap() < 0.0 {
-    //             continue;
-    //         }
-
-    //         let t = intersects.unwrap();
-    //         let surface_pos = ray.at(t);
-    //         let len_sq = (surface_pos - ray.origin).length_sq();
-
-    //         if lowest_distance.is_none() || len_sq < lowest_distance.unwrap() {
-    //             lowest_distance = Some(len_sq);
-    //             closest_object = Some(renderable.as_ref());
-    //             g_surface_pos = surface_pos;
-    //             g_t = t;
-    //         }
-    //     }
-
-    //     return match closest_object {
-    //         None => ds::Color::from_u32(0x00BADBED),
-    //         Some(obj) => obj.get_material().ray_color(&self, obj, world, ray, g_t, &g_surface_pos, depth-1)
-    //     };
-    // }
-
-    // pub fn set_pos(&mut self, pos: ds::Vector3) {
-    //     self.pos = pos;
-    //     let delta_dir = self.dir - self.pos;
-    //     self.dir = pos;
-    //     self.dirty = true;
-    // }
 
     pub fn move_camera(&mut self, delta: ds::Vector3) {
         self.pos = self.pos + delta;
@@ -193,11 +144,6 @@ impl Camera {
         self.dirty = true;
     }
 
-    // pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
-    //     self.dir = pos;
-    //     self.dirty = true;
-    // }
-    
     pub fn set_dir_relative(&mut self, dir: ds::Vector3) {
         self.dir = self.pos + (dir * self.focal_length);
         self.dirty = true;
