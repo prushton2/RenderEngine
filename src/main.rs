@@ -112,8 +112,6 @@ impl App {
     }
 
     pub fn render(&self) -> Option<wgpu::SurfaceTexture> {
-        let t0 = std::time::Instant::now();
-
         let gpu = match self.get_gpu_state() {
             Some(t) => t,
             None => return None
@@ -132,25 +130,15 @@ impl App {
         
         uniforms.sphere_count = gpu_spheres.len() as u32;
         
-        gpu.device.poll(wgpu::PollType::Poll);
-        println!("sending sphere_count={} to GPU", uniforms.sphere_count);
         gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(&uniforms));
-        
         gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(&gpu_spheres));
 
-        let t1 = std::time::Instant::now();
-
         let frame = match gpu.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(f) => f,
-            wgpu::CurrentSurfaceTexture::Outdated
-            | wgpu::CurrentSurfaceTexture::Lost => {
+            Ok(f) => f,
+            Err(_) => {
                 gpu.surface.configure(gpu.device, gpu.surface_config);
                 return None;
             }
-            wgpu::CurrentSurfaceTexture::Timeout => {
-                return None; // just skip the frame
-            }
-            _ => return None,
         };
 
         let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -181,7 +169,6 @@ impl App {
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
-                    depth_slice: None,
                     ops: wgpu::Operations {
                         load:  wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                         store: wgpu::StoreOp::Store,
@@ -190,20 +177,15 @@ impl App {
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
-                multiview_mask: None,
             });
             pass.set_pipeline(gpu.render_pipeline);
             pass.set_bind_group(0, gpu.bind_group, &[]);
             pass.draw(0..3, 0..1);
         }
 
-        let t2 = std::time::Instant::now();
-
-        // submit both passes and present
+        // submit the frame and return it for the caller to present it
         gpu.queue.submit(std::iter::once(encoder.finish()));
-        
-        let t3 = std::time::Instant::now();
-        println!("upload={:?} acquire={:?} submit={:?}", t1-t0, t2-t1, t3-t2);
+
         return Some(frame)
     }
 
@@ -291,15 +273,6 @@ impl ApplicationHandler for App {
         self.output_buf       = Some(output_buf);
     }
 
-    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        event_loop.set_control_flow(ControlFlow::WaitUntil(
-            std::time::Instant::now() + std::time::Duration::from_millis(4) // ~250fps cap
-        ));
-        if let Some(window) = &self.window {
-            window.request_redraw();
-        }
-    }
-
     fn device_event(
         &mut self,
         _event_loop: &ActiveEventLoop,
@@ -328,32 +301,36 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 self.deltatime = self.last_frame.elapsed().as_millis() as f64 / 1000.0;
                 self.last_frame = std::time::Instant::now();
-
+                
                 if self.window.is_none() {
+                    println!("No Window");
                     return;
                 }
-                                
+                
                 let window = self.window.as_ref().unwrap();
                 let size = window.inner_size();
                 
                 self.player.write().unwrap().get_camera_mut().set_window_size(size.width.into(), size.height.into());
                 self.handle_movement();
-
+                
                 if let Some(frame) = self.render() {
                     frame.present();
                 }
                 
                 let player = self.player.read().unwrap();
-
+                
                 if self.statistics_timer.elapsed().as_millis() >= 1000 {
                     self.fps_stat = (1.0/self.deltatime) as u32;
                     self.deltatime_stat = (1000.0 * self.deltatime) as u32;
                     self.statistics_timer = std::time::Instant::now();
                 }
-
+                
                 print!("\x1B[2J\x1B[1;1H");
                 println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.fps_stat, self.deltatime_stat, player.get_camera().pos(), player.get_rotation());
-                // std::thread::sleep(std::time::Duration::from_millis(17));
+
+                if let Some(window) = &self.window {
+                    window.request_redraw();
+                }
             }
 
             WindowEvent::Resized(_) => {
@@ -432,7 +409,7 @@ fn main() {
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
-    event_loop.set_control_flow(ControlFlow::Wait);
+    event_loop.set_control_flow(ControlFlow::Poll);
 
     let mut app = App::default();
     app.consume_player(player);
@@ -465,23 +442,23 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         force_fallback_adapter: false,
     }).await.unwrap();
 
-    println!("adapter: {:?}", adapter.get_info());
+    // println!("adapter: {:?}", adapter.get_info());
 
     let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
         label: None,
         required_features: wgpu::Features::empty(),
         required_limits: wgpu::Limits::default(),
         memory_hints: wgpu::MemoryHints::default(),
-        experimental_features: wgpu::ExperimentalFeatures::disabled(),
-        trace: wgpu::Trace::Off
-    }).await.unwrap();
+    }, None).await.unwrap();
+
+    let caps = surface.get_capabilities(&adapter);
 
     let surface_config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
         format: wgpu::TextureFormat::Bgra8Unorm,
         width,
         height,
-        present_mode: wgpu::PresentMode::AutoNoVsync,
+        present_mode: wgpu::PresentMode::Mailbox,
         alpha_mode: wgpu::CompositeAlphaMode::Auto,
         view_formats: vec![],
         desired_maximum_frame_latency: 1,
@@ -570,8 +547,8 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
-        bind_group_layouts: &[Some(&bind_group_layout)],
-        immediate_size: 0
+        bind_group_layouts: &[&bind_group_layout],
+        push_constant_ranges: &[]
     });
 
     let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -605,8 +582,8 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         }),
         primitive: wgpu::PrimitiveState::default(),
         depth_stencil: None,
+        multiview: None,
         multisample: wgpu::MultisampleState::default(),
-        multiview_mask: None,
         cache: None,
     });
 
