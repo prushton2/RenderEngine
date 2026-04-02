@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::{ds, material};
+use crate::ds;
 use crate::material::GpuMaterial;
 use crate::object::{Renderable, renderable::ToGpu};
 // use crate::material::{Materialable, Material};
@@ -50,12 +50,6 @@ impl Renderable for Quad {
     fn as_any(&self) -> &dyn Any {
         self
     }
-
-    fn hit_record(&self, _ray: &ds::Ray, _intersection: f64) -> ds::HitRecord {
-        ds::HitRecord {
-            outward_surface_normal: self.normal
-        }
-    }
 }
 
 impl ToGpu<GpuQuad> for Quad {
@@ -73,18 +67,3 @@ impl ToGpu<GpuQuad> for Quad {
         }
     }
 }
-
-
-// impl Materialable for Quad {
-//     fn get_material(&self) -> &dyn Material {
-//         return self.material.as_ref();
-//     }
-    
-//     fn height(&self) -> f64 {
-//         return self.v.length();
-//     }
-
-//     fn center(&self) -> ds::Vector3 {
-//         return self.q + self.v/2.0 + self.u/2.0;
-//     }
-// }

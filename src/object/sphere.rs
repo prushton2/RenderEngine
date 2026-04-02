@@ -35,31 +35,8 @@ impl Sphere {
 }
 
 impl Renderable for Sphere {
-    // fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
-    //     let a = ray.direction.length_sq();
-    //     let h = ray.direction.dot(&(self.center - ray.origin));
-    //     let c = (self.center - ray.origin).length_sq() - self.radius * self.radius;
-
-    //     let discriminant = h*h-a*c;
-
-    //     if discriminant < 0.0 {
-    //         return None;
-    //     } else {
-    //         return Some(
-    //             ((h - discriminant.sqrt() ) / a).min((h + discriminant.sqrt() ) / a)
-    //         );
-    //     }
-    // }
-
-
     fn as_any(&self) -> &dyn Any {
         self
-    }
-
-    fn hit_record(&self, ray: &ds::Ray, intersection: f64) -> ds::HitRecord {
-        ds::HitRecord {
-            outward_surface_normal: (ray.at(intersection) - self.center) / self.radius
-        }
     }
 }
 

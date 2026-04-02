@@ -63,7 +63,7 @@ struct GpuState<'a> { // makes my life infinitely easier
     render_pipeline:  &'a wgpu::RenderPipeline,
     bind_group:       &'a wgpu::BindGroup,
     uniform_buf:      &'a wgpu::Buffer,
-    output_buf:       &'a wgpu::Buffer,
+    _output_buf:       &'a wgpu::Buffer,
     spheres_buf:      &'a wgpu::Buffer,
     quads_buf:      &'a wgpu::Buffer,
 }
@@ -209,7 +209,7 @@ impl App {
                 render_pipeline:  self.render_pipeline.as_ref()?,
                 bind_group:       self.bind_group.as_ref()?,
                 uniform_buf:      self.uniform_buf.as_ref()?,
-                output_buf:       self.output_buf.as_ref()?,
+                _output_buf:       self.output_buf.as_ref()?,
                 spheres_buf:      self.spheres_buf.as_ref()?,
                 quads_buf:        self.quads_buf.as_ref()?,
             }
@@ -415,7 +415,9 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0)))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+
+        Box::new(object::Quad::new(&ds::Vector3::new( -1.0,  0.0, 4.5), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 33, 33))),
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
@@ -461,8 +463,6 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         required_limits: wgpu::Limits::default(),
         memory_hints: wgpu::MemoryHints::default(),
     }, None).await.unwrap();
-
-    let caps = surface.get_capabilities(&adapter);
 
     let surface_config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
