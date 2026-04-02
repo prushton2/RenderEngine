@@ -11,7 +11,11 @@ fn sphere_intersects(origin: vec3<f32>, dir: vec3<f32>, sphere: Sphere) -> f32 {
 
     let t1 = (h - sqrt(discriminant)) / a;
     let t2 = (h + sqrt(discriminant)) / a;
-    return min(t1, t2);
+
+    if t1 > 0.0001 { return t1; }
+    if t2 > 0.0001 { return t2; }
+    // return min(t1, t2);
+    return -1.0;
 }
 
 fn quad_intersects(origin: vec3<f32>, dir: vec3<f32>, quad: Quad) -> f32 {
