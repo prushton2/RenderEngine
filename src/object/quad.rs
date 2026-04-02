@@ -1,6 +1,7 @@
 use std::any::Any;
 
-use crate::ds;
+use crate::{ds, material};
+use crate::material::GpuMaterial;
 use crate::object::{Renderable, renderable::ToGpu};
 // use crate::material::{Materialable, Material};
 
@@ -11,7 +12,7 @@ pub struct Quad {
     d: f64,
     normal: ds::Vector3,
     // bbox: ds::Aabb
-    // material: Box<dyn Material>
+    material: GpuMaterial
 }
 
 #[repr(C)]
@@ -25,10 +26,11 @@ pub struct GpuQuad {
     d:       f32,
     normal:  [f32; 3],
     _pad2:   f32,
+    material: GpuMaterial
 }
 
 impl Quad {
-    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3,) -> Self {
+    pub fn new(q: &ds::Vector3, u: &ds::Vector3, v: &ds::Vector3, material: GpuMaterial) -> Self {
         Self {
             q: *q,
             u: *u,
@@ -39,7 +41,7 @@ impl Quad {
             // ),
             normal: u.cross(&v).unit_vector(),
             d: u.cross(&v).unit_vector().dot(q), // scalar distance to origin
-            // material: material
+            material: material
         }
     }
 }
@@ -67,6 +69,7 @@ impl ToGpu<GpuQuad> for Quad {
             d:      self.d as f32,
             normal: [self.normal.x as f32, self.normal.y as f32, self.normal.z as f32],
             _pad2:  0.0,
+            material: self.material
         }
     }
 }

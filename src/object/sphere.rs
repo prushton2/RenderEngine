@@ -2,6 +2,7 @@ use std::any::Any;
 use bytemuck;
 
 use crate::ds;
+use crate::material::GpuMaterial;
 use crate::object::{Renderable, renderable::ToGpu};
 // use crate::material::{Materialable, Material};
 
@@ -9,7 +10,7 @@ pub struct Sphere {
     center: ds::Vector3,
     radius: f64,
     // bbox: ds::Aabb,
-    // material: Box<dyn Material>
+    material: GpuMaterial
 }
 
 #[repr(C)]
@@ -17,16 +18,17 @@ pub struct Sphere {
 pub struct GpuSphere {
     center: [f32; 3],
     radius: f32,
+    material: GpuMaterial
 }
 
 // impl Downcast for Sphere {}
 
 impl Sphere {
-    pub fn new(center: &ds::Vector3, radius: f64) -> Self {
+    pub fn new(center: &ds::Vector3, radius: f64, material: GpuMaterial) -> Self {
         Self {
             center: center.clone(),
             radius: radius,
-            // material: material
+            material: material
             // bbox: ds::Aabb::from_vector3(&(center-radius), &(center+radius))
         }
     }
@@ -66,7 +68,7 @@ impl ToGpu<GpuSphere> for Sphere {
         GpuSphere {
             center: [self.center.x as f32, self.center.y as f32, self.center.z as f32],
             radius:  self.radius as f32,
-            // material: s.material.to_gpu(),
+            material: self.material,
         }
     }
 }

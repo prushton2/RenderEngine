@@ -1,5 +1,5 @@
 use crate::ds;
-use crate::object;
+// use crate::object;
 // use crate::material;
 
 pub struct Camera {
@@ -22,20 +22,21 @@ pub struct Camera {
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct GpuUniform {
-    pub pos:           [f32; 3],
-    pub _pad0:         f32,
-    pub pixel00_loc:   [f32; 3],
-    pub _pad1:         f32,
-    pub pixel_delta_w: [f32; 3],
-    pub _pad2:         f32,
-    pub pixel_delta_h: [f32; 3],
-    pub _pad3:         f32,
-    pub width:         u32,
-    pub height:        u32,
-    pub sphere_count:  u32,
-    pub _pad4:         u32,
-    pub quad_count:    u32,
-    pub _pad5:         [u32; 43], // pad to 256 bytes
+    pub pos:             [f32; 3],
+    pub _pad0:           f32,
+    pub pixel00_loc:     [f32; 3],
+    pub _pad1:           f32,
+    pub pixel_delta_w:   [f32; 3],
+    pub _pad2:           f32,
+    pub pixel_delta_h:   [f32; 3],
+    pub _pad3:           f32,
+    pub width:           u32,
+    pub height:          u32,
+    pub sphere_count:    u32,
+    pub _pad4:           u32,
+    pub quad_count:      u32,
+    pub recursion_depth: u32,
+    pub _pad5:         [u32; 42], // pad to 256 bytes
 }
 
 impl Camera {
@@ -135,7 +136,8 @@ impl Camera {
             sphere_count: 0,
             _pad4: 0,
             quad_count: 0,
-            _pad5: [0u32; 43],
+            recursion_depth: 4,
+            _pad5: [0u32; 42],
         }
     }
 

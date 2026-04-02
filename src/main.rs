@@ -7,6 +7,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowId, CursorGrabMode};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
+use crate::material::GpuMaterial;
 use crate::object::Renderable;
 use crate::object::renderable::ToGpu;
 
@@ -230,7 +231,7 @@ impl Default for App {
             uniform_buf:      None,
             output_buf:       None,
             spheres_buf:      None,
-            quads_buf:      None,
+            quads_buf:        None,
 
             player:  Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
             objects: Arc::new(vec![]),
@@ -392,29 +393,29 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
-        Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5)),
+        // Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5)),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1)),
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5)),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, GpuMaterial::new(0x0000FF00, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, GpuMaterial::new(0x000000FF, 0, 0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00FF0000, 0, 50))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x0000FF00, 0, 50))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x000000FF, 0, 50))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1)),
+        Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, GpuMaterial::new(0x0000FF, 0, 0))),
 
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5)),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5))
+        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0)))
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
@@ -508,9 +509,17 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     // --- pipelines ---
 
+    let source = format!(
+        "{}{}{}{}",
+        include_str!("./shaders/types.wgsl"),
+        include_str!("./shaders/intersection.wgsl"),
+        include_str!("./shaders/material.wgsl"),
+        include_str!("./shaders/main.wgsl")
+    );
+
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("raytracer"),
-        source: wgpu::ShaderSource::Wgsl(include_str!("./../src/shader.wgsl").into()),
+        source: wgpu::ShaderSource::Wgsl(source.into()),
     });
 
     let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
