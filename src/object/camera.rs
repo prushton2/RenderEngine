@@ -1,5 +1,5 @@
 use crate::ds;
-use crate::object;
+// use crate::object;
 // use crate::material;
 
 pub struct Camera {
@@ -19,8 +19,28 @@ pub struct Camera {
     pixel00_loc: ds::Vector3,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct GpuUniform {
+    pub pos:             [f32; 3],
+    pub _pad0:           f32,
+    pub pixel00_loc:     [f32; 3],
+    pub _pad1:           f32,
+    pub pixel_delta_w:   [f32; 3],
+    pub _pad2:           f32,
+    pub pixel_delta_h:   [f32; 3],
+    pub _pad3:           f32,
+    pub width:           u32,
+    pub height:          u32,
+    pub sphere_count:    u32,
+    pub _pad4:           u32,
+    pub quad_count:      u32,
+    pub recursion_depth: u32,
+    pub _pad5:         [u32; 42], // pad to 256 bytes
+}
+
 impl Camera {
-    pub fn zero() -> Self { // irreedeemable
+    pub fn zero() -> Self { // Basically a zero to fill some needs for a "useless" implementation
         Self {
             pos: ds::Vector3::zero(),
             dir: ds::Vector3::zero(),
@@ -101,56 +121,25 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left_corner + (0.5 * (self.pixel_delta_w + self.pixel_delta_h));
     }
 
-    pub fn get_pixel_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, x: f64, y: f64) -> u32 {
-        let pixel_center = self.pixel00_loc + (x * self.pixel_delta_w) + (y * self.pixel_delta_h);
-        let ray_direction = pixel_center - self.pos();
-        let ray = ds::Ray::new(&self.pos(), &ray_direction);
-
-        return self.ray_color(world, &ray, 6).to_u32();
-    }
-
-    pub fn ray_color(&self, world: &Vec<Box<dyn object::Renderable + Send + Sync>>, ray: &ds::Ray, depth: u32) -> ds::Color {
-        let mut lowest_distance: Option<f64> = None;
-        let mut closest_object: Option<&(dyn object::Renderable + Send + Sync)> = None;
-
-        let mut g_surface_pos: ds::Vector3 = ds::Vector3::zero();
-        let mut g_t: f64 = 0.0;
-
-        
-        if depth <= 0 {
-            return ds::Color::from_u32(0x00BADBED);
+    pub fn to_gpu(&self) -> GpuUniform {
+        GpuUniform {
+            pos:           [self.pos.x as f32, self.pos.y as f32, self.pos.z as f32],
+            _pad0: 0.0,
+            pixel00_loc:   [self.pixel00_loc.x as f32, self.pixel00_loc.y as f32, self.pixel00_loc.z as f32],
+            _pad1: 0.0,
+            pixel_delta_w: [self.pixel_delta_w.x as f32, self.pixel_delta_w.y as f32, self.pixel_delta_w.z as f32],
+            _pad2: 0.0,
+            pixel_delta_h: [self.pixel_delta_h.x as f32, self.pixel_delta_h.y as f32, self.pixel_delta_h.z as f32],
+            _pad3: 0.0,
+            width: self.window_dimensions.0 as u32,
+            height: self.window_dimensions.1 as u32,
+            sphere_count: 0,
+            _pad4: 0,
+            quad_count: 0,
+            recursion_depth: 4,
+            _pad5: [0u32; 42],
         }
-
-        for renderable in world {
-            let intersects = renderable.intersects(&ray);
-            if intersects.is_none() || intersects.unwrap() < 0.0 {
-                continue;
-            }
-
-            let t = intersects.unwrap();
-            let surface_pos = ray.at(t);
-            let len_sq = (surface_pos - ray.origin).length_sq();
-
-            if lowest_distance.is_none() || len_sq < lowest_distance.unwrap() {
-                lowest_distance = Some(len_sq);
-                closest_object = Some(renderable.as_ref());
-                g_surface_pos = surface_pos;
-                g_t = t;
-            }
-        }
-
-        return match closest_object {
-            None => ds::Color::from_u32(0x00BADBED),
-            Some(obj) => obj.get_material().ray_color(&self, obj, world, ray, g_t, &g_surface_pos, depth-1)
-        };
     }
-
-    // pub fn set_pos(&mut self, pos: ds::Vector3) {
-    //     self.pos = pos;
-    //     let delta_dir = self.dir - self.pos;
-    //     self.dir = pos;
-    //     self.dirty = true;
-    // }
 
     pub fn move_camera(&mut self, delta: ds::Vector3) {
         self.pos = self.pos + delta;
@@ -158,11 +147,6 @@ impl Camera {
         self.dirty = true;
     }
 
-    // pub fn set_dir_absolute(&mut self, pos: ds::Vector3) {
-    //     self.dir = pos;
-    //     self.dirty = true;
-    // }
-    
     pub fn set_dir_relative(&mut self, dir: ds::Vector3) {
         self.dir = self.pos + (dir * self.focal_length);
         self.dirty = true;
