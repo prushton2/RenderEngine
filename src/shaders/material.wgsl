@@ -26,7 +26,8 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     callstack[tid][0].depth = 4u;
 
 
-    while callstack_len != 0 {
+    for (var i = 0; i < 32; i++) {
+        if callstack_len == 0 { break; }
         let index = callstack_len-1;
         let call = callstack[tid][index];
 
