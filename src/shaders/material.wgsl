@@ -24,18 +24,10 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     callstack[tid][0].outputs[2] = vec3<f32>(-1.0, -1.0, -1.0);
     callstack[tid][0].depth = 4u;
 
-
     for (var i = 0; i < 32; i++) {
         if callstack_len == 0 { break; }
         let index = callstack_len-1;
-        let call = callstack[tid][index];
-
-        // kill recursion
-        if call.depth == 0 {
-            callstack[tid][call.caller].outputs[call.output_id] = vec3<f32>(186.0, 219.0, 237.0);
-            callstack_len -= 1;
-            continue;
-        }
+        var call = callstack[tid][index];
 
         let record = closest_hit(call.ray_pos, call.ray_dir);
 
@@ -52,6 +44,13 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
         // get the material
         var material: Material;
         var pushed_to_stack = false;
+
+        // kill recursion
+        if call.depth == 0 {
+            callstack[tid][call.caller].outputs[call.output_id] = material.color;
+            callstack_len -= 1;
+            continue;
+        }
 
         switch record.obj_type {
             case 0u: {
@@ -97,7 +96,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
         }
 
         if !pushed_to_stack {
-            // call = callstack[index];
+            call = callstack[tid][index];
             var color = f32(material.translucent) * call.outputs[0] + f32(material.reflect) * call.outputs[1] + f32(100 - material.translucent - material.reflect) * material.color;
             color = color / 100.0;
 

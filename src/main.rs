@@ -412,7 +412,7 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.49, GpuMaterial::new(0x00000000,  0, 50))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.49, GpuMaterial::new(0x00FF0000,  0,  0))),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00000000, 90,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00AAAAAA, 90,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
 
         Box::new(object::Quad::new(&ds::Vector3::new( -1.0,  0.0, 4.5), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 33, 33))),
