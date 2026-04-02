@@ -1,5 +1,8 @@
 @compute @workgroup_size(8, 8, 1)
-fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn main(
+    @builtin(global_invocation_id) gid: vec3<u32>,
+    @builtin(local_invocation_index) local_invocation_index: u32,
+) {
     let x = gid.x;
     let y = gid.y;
 
@@ -21,7 +24,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         return;
     }
 
-    output[idx] = ray_color(uniforms.pos, ray_dir);
+    output[idx] = ray_color(uniforms.pos, ray_dir, local_invocation_index);
 }
 
 // not sure what these do but docs say i need them
