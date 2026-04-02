@@ -14,7 +14,6 @@ var<workgroup> callstack: array<array<Call, 8>, 64>;
 
 fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     var callstack_len = 1;
-    // var callstack: array<Call, 8>;
 
     callstack[tid][0].caller = -1;
     callstack[tid][0].ray_pos = ray_pos;

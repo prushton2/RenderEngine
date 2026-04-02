@@ -1,18 +1,12 @@
 struct Uniform {
     pos:             vec3<f32>,
-    _pad0:           f32,
-    pixel00_loc:     vec3<f32>,
-    _pad1:           f32,
-    pixel_delta_w:   vec3<f32>,
-    _pad2:           f32,
-    pixel_delta_h:   vec3<f32>,
-    _pad3:           f32,
     width:           u32,
+    pixel00_loc:     vec3<f32>,
     height:          u32,
+    pixel_delta_w:   vec3<f32>,
     sphere_count:    u32,
-    _pad4:           u32,
+    pixel_delta_h:   vec3<f32>,
     quad_count:      u32,
-    recursion_depth: u32,
 }
 
 struct Sphere {

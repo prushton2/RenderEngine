@@ -209,7 +209,7 @@ impl App {
                 render_pipeline:  self.render_pipeline.as_ref()?,
                 bind_group:       self.bind_group.as_ref()?,
                 uniform_buf:      self.uniform_buf.as_ref()?,
-                _output_buf:       self.output_buf.as_ref()?,
+                _output_buf:      self.output_buf.as_ref()?,
                 spheres_buf:      self.spheres_buf.as_ref()?,
                 quads_buf:        self.quads_buf.as_ref()?,
             }
@@ -393,29 +393,27 @@ fn main() {
     );
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
-        // Box::new(object::Sphere::new(&ds::Vector3::new( 2.0,  0.0, 7.0), 0.5)),
 
         Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, GpuMaterial::new(0x00FF0000, 0, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, GpuMaterial::new(0x0000FF00, 0, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, GpuMaterial::new(0x000000FF, 0, 0))),
 
-        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-        // Box::new(object::Quad::new(&ds::Vector3::new(-1.0, -1.0, 7.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0))),
-
-        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00FF0000, 0, 50))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x0000FF00, 0, 50))),
-        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 2.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x000000FF, 0, 50))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00FF0000, 0, 50))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x0000FF00, 0, 50))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x000000FF, 0, 50))),
 
         Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
         Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, GpuMaterial::new(0x0000FF, 0, 0))),
 
+        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5,  GpuMaterial::new(0x0000FF00,  0,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5,  GpuMaterial::new(0x000000FF,  0,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5,  GpuMaterial::new(0x00FF0000, 50,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.49, GpuMaterial::new(0x00000000,  0, 50))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.49, GpuMaterial::new(0x00FF0000,  0,  0))),
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.5, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00000000, 90,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
 
         Box::new(object::Quad::new(&ds::Vector3::new( -1.0,  0.0, 4.5), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 33, 33))),
     ];
@@ -502,7 +500,7 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     let quads_buf = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("quads"),
-        size: (std::mem::size_of::<object::sphere::GpuSphere>() * 512) as u64,
+        size: (std::mem::size_of::<object::quad::GpuQuad>() * 512) as u64,
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
