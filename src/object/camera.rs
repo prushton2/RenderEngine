@@ -152,5 +152,3 @@ impl Camera {
         return self.pos;
     }
 }
-
-unsafe impl Sync for Camera {}
