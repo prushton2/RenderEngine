@@ -37,11 +37,12 @@ jobs:
           MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
           MINOR=$(echo $LATEST | cut -d. -f2)
           PATCH=$(echo $LATEST | cut -d. -f3)
-          MSG=$(git log -1 --pretty=%B)
 
-          if echo "$MSG" | grep -q "#major"; then
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+
+          if echo "$LABELS" | grep -q "major"; then
             NEW_TAG="v$((MAJOR + 1)).0.0"
-          elif echo "$MSG" | grep -q "#minor"; then
+          elif echo "$LABELS" | grep -q "minor"; then
             NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
           else
             NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
