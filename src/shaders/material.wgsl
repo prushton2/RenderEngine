@@ -5,12 +5,9 @@ struct Call {
     output_id: u32,
     outputs:   array<vec3<f32>, 3>,
     depth:     u32,
-    _pad0:     u32,
-    _pad1:     u32,
-    _pad2:     u32,
 }
 
-var<workgroup> callstack: array<array<Call, 8>, 64>;
+var<workgroup> callstack: array<array<Call, 7>, 64>;
 
 fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     var callstack_len = 1;

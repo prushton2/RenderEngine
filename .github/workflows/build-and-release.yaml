@@ -20,27 +20,29 @@ jobs:
       - name: Get next version
         id: version
         run: |
-          DESCRIPTION='${{ github.event.pull_request.body }}'
-          echo "Description: $DESCRIPTION"
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
 
-          LATEST=$(git tag --sort=-v:refname | head -n1)
-          LATEST=${LATEST:-v0.0.0}
-          MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
-          MINOR=$(echo $LATEST | cut -d. -f2)
-          PATCH=$(echo $LATEST | cut -d. -f3)
+          # Check for explicit version e.g. "version: 1.2.0"
+          EXPLICIT=$(echo "$COMMIT_MSG" | grep -oP 'version:\s*\K[0-9]+\.[0-9]+\.[0-9]+')
 
-          # LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
-          # echo "Labels: $LABELS"  # helpful for debugging
-
-          if echo "$DESCRIPTION" | grep -q "major"; then
-            NEW_TAG="v$((MAJOR + 1)).0.0"
-          elif echo "$DESCRIPTION" | grep -q "minor"; then
-            NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+          if [ -n "$EXPLICIT" ]; then
+            NEW_TAG="v$EXPLICIT"
           else
-            NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
-          fi
+            LATEST=$(git tag --sort=-v:refname | head -n1)
+            LATEST=${LATEST:-v0.0.0}
+            MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
+            MINOR=$(echo $LATEST | cut -d. -f2)
+            PATCH=$(echo $LATEST | cut -d. -f3)
 
-          echo "New Version: $NEW_TAG"
+            if echo "$COMMIT_MSG" | grep -q "#major"; then
+              NEW_TAG="v$((MAJOR + 1)).0.0"
+            elif echo "$COMMIT_MSG" | grep -q "#minor"; then
+              NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+            else
+              NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
+            fi
+          fi
 
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
