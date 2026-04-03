@@ -33,14 +33,17 @@ jobs:
       - name: Get next version
         id: version
         run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' | tr '\n' ',')
+          echo "Labels: $LABELS"
+          
           LATEST=$(git tag --sort=-v:refname | head -n1)
           LATEST=${LATEST:-v0.0.0}
           MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
           MINOR=$(echo $LATEST | cut -d. -f2)
           PATCH=$(echo $LATEST | cut -d. -f3)
 
-          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
-          echo "Labels: $LABELS"  # helpful for debugging
+          # LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          # echo "Labels: $LABELS"  # helpful for debugging
 
           if echo "$LABELS" | grep -q "major"; then
             NEW_TAG="v$((MAJOR + 1)).0.0"
