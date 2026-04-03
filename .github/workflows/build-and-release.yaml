@@ -1,8 +1,9 @@
 name: Build and Release
 run-name: ${{ github.actor }} is creating a windows and linux build for release
-on: [
-  push
-  ]
+on:
+  push:
+    branches:
+      - master
 jobs:
   Build-and-Release:
     runs-on: ubuntu-latest
