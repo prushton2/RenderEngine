@@ -5,9 +5,6 @@ struct Call {
     output_id: u32,
     outputs:   array<vec3<f32>, 3>,
     depth:     u32,
-    _pad0:     u32,
-    _pad1:     u32,
-    _pad2:     u32,
 }
 
 var<workgroup> callstack: array<array<Call, 7>, 64>;
