@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - workflow_debug
       # - dev
 jobs:
   Build-and-Release:
@@ -33,8 +34,8 @@ jobs:
       - name: Get next version
         id: version
         run: |
-          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' | tr '\n' ',')
-          echo "Labels: $LABELS"
+          DESCRIPTION='${{ github.event.pull_request.body }}'
+          echo "Description: $DESCRIPTION"
 
           LATEST=$(git tag --sort=-v:refname | head -n1)
           LATEST=${LATEST:-v0.0.0}
