@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - dev
+      # - dev
 jobs:
   Build-and-Release:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
         run: |
           LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' | tr '\n' ',')
           echo "Labels: $LABELS"
-          
+
           LATEST=$(git tag --sort=-v:refname | head -n1)
           LATEST=${LATEST:-v0.0.0}
           MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
