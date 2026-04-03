@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - dev
 jobs:
   Build-and-Release:
     runs-on: ubuntu-latest
@@ -39,6 +40,7 @@ jobs:
           PATCH=$(echo $LATEST | cut -d. -f3)
 
           LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "Labels: $LABELS"  # helpful for debugging
 
           if echo "$LABELS" | grep -q "major"; then
             NEW_TAG="v$((MAJOR + 1)).0.0"
