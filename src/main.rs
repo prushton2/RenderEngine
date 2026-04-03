@@ -394,18 +394,31 @@ fn main() {
 
     let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
 
-        Box::new(object::Sphere::new(&ds::Vector3::new(-1.0,  0.0, 7.0), 0.1, GpuMaterial::new(0x00FF0000, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-2.0, -0.4, 5.0), 0.1, GpuMaterial::new(0x0000FF00, 0, 0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0, 5.0), 0.5, GpuMaterial::new(0x000000FF, 0, 0))),
 
+        // three spheres
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.75, 5.0), 0.25, GpuMaterial::new(0x00FF0000, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0,  0.0,  5.0), 0.25, GpuMaterial::new(0x0000FF00, 0, 0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new( 0.0, -0.75, 5.0), 0.25, GpuMaterial::new(0x000000FF, 0, 0))),
+
+        // reflective and translucent pane
+        Box::new(object::Quad::new(&ds::Vector3::new( -1.0,  -1.0, 4.5), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 2.0, 0.0), GpuMaterial::new(0x00888888, 33, 33))),
+
+        // colored windows
         Box::new(object::Quad::new(&ds::Vector3::new(-2.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00FF0000, 0, 50))),
         Box::new(object::Quad::new(&ds::Vector3::new(-3.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x0000FF00, 0, 50))),
         Box::new(object::Quad::new(&ds::Vector3::new(-4.0, -0.5, 1.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x000000FF, 0, 50))),
 
+        // colored mirrors
+        Box::new(object::Quad::new(&ds::Vector3::new(-2.0, 1.5, 10.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, -0.5), GpuMaterial::new(0x00FF0000, 50, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-3.0, 1.5, 10.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, -0.5), GpuMaterial::new(0x0000FF00, 50, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(-4.0, 1.5, 10.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, -0.5), GpuMaterial::new(0x000000FF, 50, 0))),
+
+        // double mirror
         Box::new(object::Quad::new(&ds::Vector3::new(-5.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
         Box::new(object::Quad::new(&ds::Vector3::new(-7.0, -0.5, 3.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 75, 0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-6.0, 0.0, 3.5), 0.1, GpuMaterial::new(0x0000FF, 0, 0))),
 
+        //
         Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5,  GpuMaterial::new(0x0000FF00,  0,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5,  GpuMaterial::new(0x000000FF,  0,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5,  GpuMaterial::new(0x00FF0000, 50,  0))),
@@ -415,7 +428,8 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00AAAAAA, 90,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new( -1.0,  0.0, 4.5), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 33, 33))),
+
+
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
