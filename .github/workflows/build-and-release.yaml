@@ -11,8 +11,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v5
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
+      - name: Build Linux Release
+        run: cargo build --release
+      - name: Build Windows Release
+        run: cargo build --release --target x86_64-pc-windows-gnu
       - run: echo "🍏 This job's status is ${{ job.status }}."
