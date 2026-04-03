@@ -5,30 +5,13 @@ on:
     branches:
       - master
       - workflow_debug
-      # - dev
+
 jobs:
   Build-and-Release:
     runs-on: ubuntu-latest
     steps:
-      # - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
-      # - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      # - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v5
-      - name: Install dependencies
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          sudo apt-get install -y mingw-w64
-
-
-      - name: Build Linux Release
-        run: |
-          cargo build --release
-          mv target/release/RenderEngine ./RenderEngine-linux
-      - name: Build Windows Release
-        run: |
-          cargo build --release --target x86_64-pc-windows-gnu
-          mv target/x86_64-pc-windows-gnu/release/RenderEngine.exe ./RenderEngine-windows.exe
 
 
       - name: Get next version
@@ -55,6 +38,22 @@ jobs:
           fi
 
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+
+      - name: Install dependencies
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          sudo apt-get install -y mingw-w64
+
+
+      - name: Build Linux Release
+        run: |
+          cargo build --release
+          mv target/release/RenderEngine ./RenderEngine-linux
+      - name: Build Windows Release
+        run: |
+          cargo build --release --target x86_64-pc-windows-gnu
+          mv target/x86_64-pc-windows-gnu/release/RenderEngine.exe ./RenderEngine-windows.exe
 
 
       - name: Create Release
