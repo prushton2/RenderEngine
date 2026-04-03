@@ -1,21 +1,62 @@
 name: Build and Release
 run-name: ${{ github.actor }} is creating a windows and linux build for release
-on: [push]
+on: [
+  push
+  ]
 jobs:
-  Explore-GitHub-Actions:
+  Build-and-Release:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      # - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      # - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      # - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v5
-      - name: Installing dependencies
+      - name: Install dependencies
         run: |
           rustup target add x86_64-pc-windows-gnu
           sudo apt-get install -y mingw-w64
-      - name: Build Windows Release
-        run: cargo build --release --target x86_64-pc-windows-gnu
+
+
       - name: Build Linux Release
-        run: cargo build --release
+        run: |
+          cargo build --release
+          mv target/release/RenderEngine ./RenderEngine-linux
+      - name: Build Windows Release
+        run: |
+          cargo build --release --target x86_64-pc-windows-gnu
+          mv target/release/x86_64-pc-windows-gnu/release/RenderEngine.exe ./RenderEngine-windows.exe
+
+
+      - name: Get next version
+        id: version
+        run: |
+          LATEST=$(git tag --sort=-v:refname | head -n1)
+          LATEST=${LATEST:-v0.0.0}
+          MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
+          MINOR=$(echo $LATEST | cut -d. -f2)
+          PATCH=$(echo $LATEST | cut -d. -f3)
+          MSG=$(git log -1 --pretty=%B)
+
+          if echo "$MSG" | grep -q "#major"; then
+            NEW_TAG="v$((MAJOR + 1)).0.0"
+          elif echo "$MSG" | grep -q "#minor"; then
+            NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+          else
+            NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          generate_release_notes: true  # auto-generates notes from commits/PRs
+          files: |
+            ./RenderEngine-linux
+            ./RenderEngine-windows.exe
+
       - run: echo "This job's status is ${{ job.status }}."
