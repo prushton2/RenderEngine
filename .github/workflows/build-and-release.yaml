@@ -32,13 +32,15 @@ jobs:
           # LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
           # echo "Labels: $LABELS"  # helpful for debugging
 
-          if echo "$LABELS" | grep -q "major"; then
+          if echo "$DESCRIPTION" | grep -q "major"; then
             NEW_TAG="v$((MAJOR + 1)).0.0"
-          elif echo "$LABELS" | grep -q "minor"; then
+          elif echo "$DESCRIPTION" | grep -q "minor"; then
             NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
           else
             NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
           fi
+
+          echo "New Version: $NEW_TAG"
 
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
