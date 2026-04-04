@@ -349,10 +349,25 @@ impl ApplicationHandler for App {
                 }
             }
 
-            WindowEvent::Resized(_) => {
-                if let Some(window) = &self.window {
-                    window.request_redraw();
-                }
+            WindowEvent::Resized(new_size) => {
+                let window = match &self.window {
+                    Some(t) => t,
+                    None => return,
+                };
+
+                let surface = match &self.wgpu_surface {
+                    Some(t) => t,
+                    None => return,
+                };
+
+                let device = match &self.device {
+                    Some(t) => t,
+                    None => return,
+                };
+
+                let surface_config = create_surface_config(new_size.width.into(), new_size.height.into());
+                surface.configure(&device, &surface_config);
+                window.request_redraw();
             }
 
             WindowEvent::KeyboardInput{
@@ -427,9 +442,6 @@ fn main() {
 
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00AAAAAA, 90,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
-
-
-
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
@@ -458,6 +470,8 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
     wgpu::Buffer, // spheres
     wgpu::Buffer, // quads
 ) {
+    // --- get a handle to the graphics card ---
+
     let instance = wgpu::Instance::default();
     let surface = instance.create_surface(window).unwrap();
 
@@ -467,8 +481,6 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         force_fallback_adapter: false,
     }).await.unwrap();
 
-    // println!("adapter: {:?}", adapter.get_info());
-
     let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
         label: None,
         required_features: wgpu::Features::empty(),
@@ -476,16 +488,9 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
         memory_hints: wgpu::MemoryHints::default(),
     }, None).await.unwrap();
 
-    let surface_config = wgpu::SurfaceConfiguration {
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: wgpu::TextureFormat::Bgra8Unorm,
-        width,
-        height,
-        present_mode: wgpu::PresentMode::Mailbox,
-        alpha_mode: wgpu::CompositeAlphaMode::Auto,
-        view_formats: vec![],
-        desired_maximum_frame_latency: 1,
-    };
+    // --- create the surface ---
+
+    let surface_config = create_surface_config(width, height);
     surface.configure(&device, &surface_config);
 
     // --- buffers ---
@@ -639,4 +644,17 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     (device, queue, surface, surface_config, compute_pipeline,
      render_pipeline, bind_group, uniform_buf, output_buf, spheres_buf, quads_buf)
+}
+
+fn create_surface_config(width: u32, height: u32) -> wgpu::SurfaceConfiguration {
+    wgpu::SurfaceConfiguration {
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        format: wgpu::TextureFormat::Bgra8Unorm,
+        width: width,
+        height: height,
+        present_mode: wgpu::PresentMode::Mailbox,
+        alpha_mode: wgpu::CompositeAlphaMode::Auto,
+        view_formats: vec![],
+        desired_maximum_frame_latency: 1,
+    }
 }
