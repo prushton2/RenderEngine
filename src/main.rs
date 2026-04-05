@@ -24,8 +24,7 @@ const SPEED: f64 = 1.5;
 struct App {
     // window
     window: Option<Arc<Window>>,
-
-    gpu: wgpu_handler::GpuHandler,
+    gpu:    wgpu_handler::GpuHandler,
 
     // scene
     player:  Arc<RwLock<object::Player>>,
@@ -36,12 +35,12 @@ struct App {
     mouse_delta: (f64, f64),
 
     // statistics
-    last_frame:                 std::time::Instant,
-    deltatime:                  f64,
+    last_frame: std::time::Instant,
+    deltatime:  f64,
 
-    fps_stat:                   u32,
-    deltatime_stat:             u32,
-    statistics_timer:           std::time::Instant,
+    fps_stat:         u32,
+    deltatime_stat:   u32,
+    statistics_timer: std::time::Instant,
 }
 
 impl App {
@@ -90,7 +89,7 @@ impl App {
     }
 
     pub fn render(&self) -> Option<wgpu::SurfaceTexture> {
-        let gpu = match self.gpu.get_gpu_state() {
+        let gpu = match self.gpu.get_state() {
             Some(t) => t,
             None => return None
         };
@@ -177,17 +176,17 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            window:           None,
-            gpu:              wgpu_handler::GpuHandler::default(),
+            window: None,
+            gpu:    wgpu_handler::GpuHandler::default(),
 
-            player:           Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
-            objects:          Arc::new(vec![]),
+            player:  Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
+            objects: Arc::new(vec![]),
 
-            keyboard:         HashMap::new(),
-            mouse_delta:      (0.0, 0.0),
+            keyboard:    HashMap::new(),
+            mouse_delta: (0.0, 0.0),
 
-            last_frame:       std::time::Instant::now(),
-            deltatime:        0.0,
+            last_frame: std::time::Instant::now(),
+            deltatime:  0.0,
 
             fps_stat:         0,
             deltatime_stat:   0,
@@ -213,7 +212,7 @@ impl ApplicationHandler for App {
 
         // wgpu init is async but resumed() isn't — use pollster to block
         pollster::block_on(self.gpu.init(window.clone(), WIDTH as u32, HEIGHT as u32));
-        
+
         self.window = Some(window);
     }
 

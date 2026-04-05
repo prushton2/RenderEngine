@@ -51,7 +51,7 @@ pub struct GpuStateMut<'a> { // makes my life infinitely easier
 impl GpuHandler {
 
     // makes it easier to not have to wrap everything in some()
-    pub fn get_gpu_state_mut(&mut self) -> Option<GpuStateMut<'_>> {
+    pub fn get_state_mut(&mut self) -> Option<GpuStateMut<'_>> {
         Some(
             GpuStateMut {
                 device:           self.device.as_mut()?,
@@ -69,7 +69,7 @@ impl GpuHandler {
         )
     }
 
-    pub fn get_gpu_state(&self) -> Option<GpuState<'_>> {
+    pub fn get_state(&self) -> Option<GpuState<'_>> {
         Some(
             GpuState {
                 device:           self.device.as_ref()?,
@@ -88,7 +88,7 @@ impl GpuHandler {
     }
 
     pub fn change_resolution(&mut self, width: u32, height: u32) {
-        let gpu = match self.get_gpu_state_mut() {
+        let gpu = match self.get_state_mut() {
             Some(t) => t,
             None => return
         };
