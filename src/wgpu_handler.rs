@@ -16,6 +16,7 @@ pub struct GpuHandler {
     pub output_buf:       Option<wgpu::Buffer>,
     pub spheres_buf:      Option<wgpu::Buffer>,
     pub quads_buf:        Option<wgpu::Buffer>,
+    pub output_buf_size:  Option<u64>,
 }
 
 #[allow(unused)]
@@ -28,9 +29,10 @@ pub struct GpuState<'a> { // makes my life infinitely easier
     pub render_pipeline:  &'a wgpu::RenderPipeline,
     pub bind_group:       &'a wgpu::BindGroup,
     pub uniform_buf:      &'a wgpu::Buffer,
-    pub _output_buf:      &'a wgpu::Buffer,
+    pub output_buf:       &'a wgpu::Buffer,
     pub spheres_buf:      &'a wgpu::Buffer,
     pub quads_buf:        &'a wgpu::Buffer,
+    pub output_buf_size:  &'a u64
 }
 
 #[allow(unused)]
@@ -43,15 +45,16 @@ pub struct GpuStateMut<'a> { // makes my life infinitely easier
     pub render_pipeline:  &'a mut wgpu::RenderPipeline,
     pub bind_group:       &'a mut wgpu::BindGroup,
     pub uniform_buf:      &'a mut wgpu::Buffer,
-    pub _output_buf:      &'a mut wgpu::Buffer,
+    pub output_buf:       &'a mut wgpu::Buffer,
     pub spheres_buf:      &'a mut wgpu::Buffer,
     pub quads_buf:        &'a mut wgpu::Buffer,
+    pub output_buf_size:  &'a mut u64,
 }
 
 impl GpuHandler {
 
     // makes it easier to not have to wrap everything in some()
-    pub fn get_state_mut(&mut self) -> Option<GpuStateMut<'_>> {
+    fn get_state_mut(&mut self) -> Option<GpuStateMut<'_>> {
         Some(
             GpuStateMut {
                 device:           self.device.as_mut()?,
@@ -62,9 +65,10 @@ impl GpuHandler {
                 render_pipeline:  self.render_pipeline.as_mut()?,
                 bind_group:       self.bind_group.as_mut()?,
                 uniform_buf:      self.uniform_buf.as_mut()?,
-                _output_buf:      self.output_buf.as_mut()?,
+                output_buf:       self.output_buf.as_mut()?,
                 spheres_buf:      self.spheres_buf.as_mut()?,
                 quads_buf:        self.quads_buf.as_mut()?,
+                output_buf_size:  self.output_buf_size.as_mut()?,
             }
         )
     }
@@ -80,9 +84,10 @@ impl GpuHandler {
                 render_pipeline:  self.render_pipeline.as_ref()?,
                 bind_group:       self.bind_group.as_ref()?,
                 uniform_buf:      self.uniform_buf.as_ref()?,
-                _output_buf:      self.output_buf.as_ref()?,
+                output_buf:       self.output_buf.as_ref()?,
                 spheres_buf:      self.spheres_buf.as_ref()?,
                 quads_buf:        self.quads_buf.as_ref()?,
+                output_buf_size:  self.output_buf_size.as_ref()?,
             }
         )
     }
@@ -97,6 +102,29 @@ impl GpuHandler {
         gpu.surface_config.height = height;
 
         gpu.surface.configure(&gpu.device, &gpu.surface_config);
+
+        if (width*height) as u64 > *gpu.output_buf_size {
+            *gpu.output_buf = gpu.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("output"),
+                size: (width * height * 4) as u64, // 4 bytes per pixel
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+
+            
+            *gpu.bind_group = gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &gpu.compute_pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry { binding: 0, resource: gpu.uniform_buf.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 1, resource: gpu.output_buf.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 2, resource: gpu.spheres_buf.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 3, resource: gpu.quads_buf.as_entire_binding() },
+                ],
+            });
+
+            self.output_buf_size = Some((width * height) as u64);
+        }
     }
 
     // vibecoded but man thats a lot
@@ -294,6 +322,7 @@ impl GpuHandler {
         self.output_buf = Some(output_buf);
         self.spheres_buf = Some(spheres_buf);
         self.quads_buf = Some(quads_buf);
+        self.output_buf_size = Some((width as u64)*(height as u64));
     }
 }
 
@@ -311,6 +340,7 @@ impl Default for GpuHandler {
             output_buf:       None,
             spheres_buf:      None,
             quads_buf:        None,
+            output_buf_size:  None,
         }
     }
 }
