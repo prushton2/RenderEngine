@@ -11,6 +11,7 @@ use crate::material::GpuMaterial;
 use crate::object::Renderable;
 use crate::object::renderable::ToGpu;
 
+mod wgpu_handler;
 mod material;
 mod object;
 mod ds;
@@ -23,19 +24,7 @@ const SPEED: f64 = 1.5;
 struct App {
     // window
     window: Option<Arc<Window>>,
-
-    // wgpu (set in resumed, always Some after that)
-    device:           Option<wgpu::Device>,
-    queue:            Option<wgpu::Queue>,
-    wgpu_surface:     Option<wgpu::Surface<'static>>,
-    surface_config:   Option<wgpu::SurfaceConfiguration>,
-    compute_pipeline: Option<wgpu::ComputePipeline>,
-    render_pipeline:  Option<wgpu::RenderPipeline>,
-    bind_group:       Option<wgpu::BindGroup>,
-    uniform_buf:      Option<wgpu::Buffer>,
-    output_buf:       Option<wgpu::Buffer>,
-    spheres_buf:      Option<wgpu::Buffer>,
-    quads_buf:        Option<wgpu::Buffer>,
+    gpu:    wgpu_handler::GpuHandler,
 
     // scene
     player:  Arc<RwLock<object::Player>>,
@@ -46,26 +35,12 @@ struct App {
     mouse_delta: (f64, f64),
 
     // statistics
-    last_frame:                 std::time::Instant,
-    deltatime:                  f64,
+    last_frame: std::time::Instant,
+    deltatime:  f64,
 
-    fps_stat:                   u32,
-    deltatime_stat:             u32,
-    statistics_timer:           std::time::Instant,
-}
-
-struct GpuState<'a> { // makes my life infinitely easier
-    device:           &'a wgpu::Device,
-    queue:            &'a wgpu::Queue,
-    surface:          &'a wgpu::Surface<'static>,
-    surface_config:   &'a wgpu::SurfaceConfiguration,
-    compute_pipeline: &'a wgpu::ComputePipeline,
-    render_pipeline:  &'a wgpu::RenderPipeline,
-    bind_group:       &'a wgpu::BindGroup,
-    uniform_buf:      &'a wgpu::Buffer,
-    _output_buf:       &'a wgpu::Buffer,
-    spheres_buf:      &'a wgpu::Buffer,
-    quads_buf:      &'a wgpu::Buffer,
+    fps_stat:         u32,
+    deltatime_stat:   u32,
+    statistics_timer: std::time::Instant,
 }
 
 impl App {
@@ -114,7 +89,7 @@ impl App {
     }
 
     pub fn render(&self) -> Option<wgpu::SurfaceTexture> {
-        let gpu = match self.get_gpu_state() {
+        let gpu = match self.gpu.get_state() {
             Some(t) => t,
             None => return None
         };
@@ -124,7 +99,6 @@ impl App {
         // upload uniforms
         let mut uniforms = player.get_camera().to_gpu();
 
-        // println!("object count: {}", self.objects.len());
         let gpu_spheres: Vec<object::sphere::GpuSphere> = self.objects.iter()
             .filter_map(|o| o.as_any().downcast_ref::<object::Sphere>())
             .map(|s| s.to_gpu())
@@ -197,41 +171,13 @@ impl App {
 
         return Some(frame)
     }
-
-    fn get_gpu_state(&self) -> Option<GpuState<'_>> {
-        Some(
-            GpuState {
-                device:           self.device.as_ref()?,
-                queue:            self.queue.as_ref()?,
-                surface:          self.wgpu_surface.as_ref()?,
-                surface_config:   self.surface_config.as_ref()?,
-                compute_pipeline: self.compute_pipeline.as_ref()?,
-                render_pipeline:  self.render_pipeline.as_ref()?,
-                bind_group:       self.bind_group.as_ref()?,
-                uniform_buf:      self.uniform_buf.as_ref()?,
-                _output_buf:      self.output_buf.as_ref()?,
-                spheres_buf:      self.spheres_buf.as_ref()?,
-                quads_buf:        self.quads_buf.as_ref()?,
-            }
-        )
-    }
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
-            window:           None,
-            device:           None,
-            queue:            None,
-            wgpu_surface:     None,
-            surface_config:   None,
-            compute_pipeline: None,
-            render_pipeline:  None,
-            bind_group:       None,
-            uniform_buf:      None,
-            output_buf:       None,
-            spheres_buf:      None,
-            quads_buf:        None,
+            window: None,
+            gpu:    wgpu_handler::GpuHandler::default(),
 
             player:  Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
             objects: Arc::new(vec![]),
@@ -239,12 +185,12 @@ impl Default for App {
             keyboard:    HashMap::new(),
             mouse_delta: (0.0, 0.0),
 
-            last_frame:                 std::time::Instant::now(),
-            deltatime:                  0.0,
+            last_frame: std::time::Instant::now(),
+            deltatime:  0.0,
 
-            fps_stat:                   0,
-            deltatime_stat:             0,
-            statistics_timer:           std::time::Instant::now(),
+            fps_stat:         0,
+            deltatime_stat:   0,
+            statistics_timer: std::time::Instant::now(),
         }
     }
 }
@@ -265,23 +211,9 @@ impl ApplicationHandler for App {
         window.set_cursor_visible(false);
 
         // wgpu init is async but resumed() isn't — use pollster to block
-        let (device, queue, surface, surface_config,
-            compute_pipeline, render_pipeline,
-            bind_group, uniform_buf, output_buf, spheres_buf, quads_buf
-        ) = pollster::block_on(init_wgpu(window.clone(), WIDTH as u32, HEIGHT as u32));
+        pollster::block_on(self.gpu.init(window.clone(), WIDTH as u32, HEIGHT as u32));
 
-        self.window           = Some(window);
-        self.device           = Some(device);
-        self.queue            = Some(queue);
-        self.wgpu_surface     = Some(surface);
-        self.surface_config   = Some(surface_config);
-        self.compute_pipeline = Some(compute_pipeline);
-        self.render_pipeline  = Some(render_pipeline);
-        self.bind_group       = Some(bind_group);
-        self.uniform_buf      = Some(uniform_buf);
-        self.output_buf       = Some(output_buf);
-        self.spheres_buf      = Some(spheres_buf);
-        self.quads_buf        = Some(quads_buf);
+        self.window = Some(window);
     }
 
     fn device_event(
@@ -355,18 +287,8 @@ impl ApplicationHandler for App {
                     None => return,
                 };
 
-                let surface = match &self.wgpu_surface {
-                    Some(t) => t,
-                    None => return,
-                };
-
-                let device = match &self.device {
-                    Some(t) => t,
-                    None => return,
-                };
-
-                let surface_config = create_surface_config(new_size.width.into(), new_size.height.into());
-                surface.configure(&device, &surface_config);
+                self.gpu.change_resolution(new_size.width.into(), new_size.height.into());
+                
                 window.request_redraw();
             }
 
@@ -452,209 +374,4 @@ fn main() {
     app.consume_objects(objects);
 
     event_loop.run_app(&mut app).expect("Event loop failed");
-}
-
-
-
-// vibecoded but man thats a lot
-async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
-    wgpu::Device,
-    wgpu::Queue,
-    wgpu::Surface<'static>,
-    wgpu::SurfaceConfiguration,
-    wgpu::ComputePipeline,
-    wgpu::RenderPipeline,
-    wgpu::BindGroup,
-    wgpu::Buffer, // camera
-    wgpu::Buffer, // output
-    wgpu::Buffer, // spheres
-    wgpu::Buffer, // quads
-) {
-    // --- get a handle to the graphics card ---
-
-    let instance = wgpu::Instance::default();
-    let surface = instance.create_surface(window).unwrap();
-
-    let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
-        compatible_surface: Some(&surface),
-        force_fallback_adapter: false,
-    }).await.unwrap();
-
-    let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
-        label: None,
-        required_features: wgpu::Features::empty(),
-        required_limits: wgpu::Limits::default(),
-        memory_hints: wgpu::MemoryHints::default(),
-    }, None).await.unwrap();
-
-    // --- create the surface ---
-
-    let surface_config = create_surface_config(width, height);
-    surface.configure(&device, &surface_config);
-
-    // --- buffers ---
-
-    let uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("uniform"),
-        size: std::mem::size_of::<object::camera::GpuUniform>() as u64,
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    // output buffer — one u32 per pixel
-    let output_buf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("output"),
-        size: (width * height * 4) as u64, // 4 bytes per pixel
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        mapped_at_creation: false,
-    });
-
-    let spheres_buf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("spheres"),
-        size: (std::mem::size_of::<object::sphere::GpuSphere>() * 512) as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    let quads_buf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("quads"),
-        size: (std::mem::size_of::<object::quad::GpuQuad>() * 512) as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    // --- pipelines ---
-
-    let source = format!(
-        "{}{}{}{}",
-        include_str!("./shaders/types.wgsl"),
-        include_str!("./shaders/intersection.wgsl"),
-        include_str!("./shaders/material.wgsl"),
-        include_str!("./shaders/main.wgsl")
-    );
-
-    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: Some("raytracer"),
-        source: wgpu::ShaderSource::Wgsl(source.into()),
-    });
-
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: None,
-        entries: &[
-            // camera
-            wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::COMPUTE | wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
-            // output
-            wgpu::BindGroupLayoutEntry {
-                binding: 1,
-                visibility: wgpu::ShaderStages::COMPUTE | wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
-            // spheres
-            wgpu::BindGroupLayoutEntry {
-                binding: 2,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
-                    has_dynamic_offset: false,
-                    min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<object::sphere::GpuSphere>() as u64),
-                },
-                count: None,
-            },
-            // quads
-            wgpu::BindGroupLayoutEntry {
-                binding: 3,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
-                    has_dynamic_offset: false,
-                    min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<object::quad::GpuQuad>() as u64),
-                },
-                count: None,
-            },
-        ],
-    });
-
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None,
-        layout: &bind_group_layout,
-        entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: uniform_buf.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 1, resource: output_buf.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 2, resource: spheres_buf.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 3, resource: quads_buf.as_entire_binding() },
-        ],
-    });
-
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-        label: None,
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[]
-    });
-
-    let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-        label: Some("compute"),
-        layout: Some(&pipeline_layout),
-        module: &shader,
-        entry_point: Some("main"),
-        compilation_options: Default::default(),
-        cache: None,
-    });
-
-    // minimal render pipeline — just blits the output buffer to screen
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some("blit"),
-        layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
-            module: &shader,
-            entry_point: Some("vs_main"),
-            buffers: &[],
-            compilation_options: Default::default(),
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: &shader,
-            entry_point: Some("fs_main"),
-            targets: &[Some(wgpu::ColorTargetState {
-                format: surface_config.format,
-                blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
-            })],
-            compilation_options: Default::default(),
-        }),
-        primitive: wgpu::PrimitiveState::default(),
-        depth_stencil: None,
-        multiview: None,
-        multisample: wgpu::MultisampleState::default(),
-        cache: None,
-    });
-
-    (device, queue, surface, surface_config, compute_pipeline,
-     render_pipeline, bind_group, uniform_buf, output_buf, spheres_buf, quads_buf)
-}
-
-fn create_surface_config(width: u32, height: u32) -> wgpu::SurfaceConfiguration {
-    wgpu::SurfaceConfiguration {
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: wgpu::TextureFormat::Bgra8Unorm,
-        width: width,
-        height: height,
-        present_mode: wgpu::PresentMode::Mailbox,
-        alpha_mode: wgpu::CompositeAlphaMode::Auto,
-        view_formats: vec![],
-        desired_maximum_frame_latency: 1,
-    }
 }
