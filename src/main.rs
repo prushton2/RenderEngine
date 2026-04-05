@@ -355,18 +355,20 @@ impl ApplicationHandler for App {
                     None => return,
                 };
 
-                let surface = match &self.wgpu_surface {
+                let surface_config = match &mut self.surface_config {
                     Some(t) => t,
                     None => return,
                 };
 
-                let device = match &self.device {
+                surface_config.width = new_size.width.into();
+                surface_config.height = new_size.height.into();
+
+                let gpu = match self.get_gpu_state() {
                     Some(t) => t,
                     None => return,
                 };
-
-                let surface_config = create_surface_config(new_size.width.into(), new_size.height.into());
-                surface.configure(&device, &surface_config);
+                
+                gpu.surface.configure(&gpu.device, &gpu.surface_config);
                 window.request_redraw();
             }
 
@@ -490,7 +492,17 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     // --- create the surface ---
 
-    let surface_config = create_surface_config(width, height);
+    let surface_config = wgpu::SurfaceConfiguration {
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        format: wgpu::TextureFormat::Bgra8Unorm,
+        width: width,
+        height: height,
+        present_mode: wgpu::PresentMode::Mailbox,
+        alpha_mode: wgpu::CompositeAlphaMode::Auto,
+        view_formats: vec![],
+        desired_maximum_frame_latency: 1,
+    };
+    
     surface.configure(&device, &surface_config);
 
     // --- buffers ---
@@ -644,17 +656,4 @@ async fn init_wgpu(window: Arc<Window>, width: u32, height: u32) -> (
 
     (device, queue, surface, surface_config, compute_pipeline,
      render_pipeline, bind_group, uniform_buf, output_buf, spheres_buf, quads_buf)
-}
-
-fn create_surface_config(width: u32, height: u32) -> wgpu::SurfaceConfiguration {
-    wgpu::SurfaceConfiguration {
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: wgpu::TextureFormat::Bgra8Unorm,
-        width: width,
-        height: height,
-        present_mode: wgpu::PresentMode::Mailbox,
-        alpha_mode: wgpu::CompositeAlphaMode::Auto,
-        view_formats: vec![],
-        desired_maximum_frame_latency: 1,
-    }
 }
