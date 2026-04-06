@@ -6,7 +6,6 @@ on:
       - closed
     branches:
       - master
-      - workflow_debug
 
 jobs:
   Build-and-Release:
@@ -16,37 +15,32 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v5
 
-
       - name: Get next version
         id: version
+        env:
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
+          LABELS=$(echo "$LABELS_JSON" | jq .[].name)
+          echo "LABELS: \n$LABELS"
+          LATEST=$(gh release view --json tagName --jq '.tagName')
+          echo "Latest release: $LATEST"
+          
+          MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
+          MINOR=$(echo $LATEST | cut -d. -f2)
+          PATCH=$(echo $LATEST | cut -d. -f3)
 
-          # Check for explicit version e.g. "version: 1.2.0"
-          EXPLICIT=$(echo "$COMMIT_MSG" | grep -oP 'version:\s*\K[0-9]+\.[0-9]+\.[0-9]+')
-
-          if [ -n "$EXPLICIT" ]; then
-            NEW_TAG="v$EXPLICIT"
-          else
-            LATEST=$(git tag --sort=-v:refname | head -n1)
-            LATEST=${LATEST:-v0.0.0}
-            MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
-            MINOR=$(echo $LATEST | cut -d. -f2)
-            PATCH=$(echo $LATEST | cut -d. -f3)
-
-            if echo "$COMMIT_MSG" | grep -q "#major"; then
-              NEW_TAG="v$((MAJOR + 1)).0.0"
-            elif echo "$COMMIT_MSG" | grep -q "#minor"; then
-              NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
-            else
-              NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
-            fi
+          if echo "$LABELS" | grep -q "major"; then
+            NEW_TAG="v$((MAJOR + 1)).0.0"
+          elif echo "$LABELS" | grep -q "minor"; then
+            NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+          elif echo "$LABELS" | grep -q "patch"; then
+            NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
           fi
 
-          echo "Version: $NEW_TAG"
+          echo "New Release: $NEW_TAG"
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
-
+          
 
       - name: Install dependencies
         run: |
