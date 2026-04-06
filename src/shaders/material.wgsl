@@ -11,6 +11,7 @@ var<workgroup> callstack: array<array<Call, 7>, 64>;
 
 fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     var callstack_len = 1;
+    let light_dir = vec3<f32>(0.57735,0.57735,0);
 
     callstack[tid][0].caller = -1;
     callstack[tid][0].ray_pos = ray_pos;
@@ -92,9 +93,20 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             pushed_to_stack = true;
         }
 
+        var lit_color = material.color;
+
+        if material.reflect + material.translucent < 100 {
+            let light = max(dot(record.normal, light_dir), 0.0);
+            lit_color = vec3<f32>(
+                ((lit_color.x + 128.0*light)/2),
+                ((lit_color.y + 128.0*light)/2),
+                ((lit_color.z + 128.0*light)/2),
+            );
+        }
+
         if !pushed_to_stack {
             call = callstack[tid][index];
-            var color = f32(material.translucent) * call.outputs[0] + f32(material.reflect) * call.outputs[1] + f32(100 - material.translucent - material.reflect) * material.color;
+            var color = f32(material.translucent) * call.outputs[0] + f32(material.reflect) * call.outputs[1] + f32(100 - material.translucent - material.reflect) * lit_color;
             color = color / 100.0;
 
             if call.caller != -1 {
