@@ -19,6 +19,7 @@ jobs:
         id: version
         env:
           LABELS: ${{ toJson(github.event.pull_request.labels) }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "LABELS: $LABELS"
           LATEST=$(gh release view --json tagName --jq '.tagName')
