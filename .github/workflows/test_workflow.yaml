@@ -18,13 +18,22 @@ jobs:
       - name: Get next version
         id: version
         env:
-          LABELS: ${{ toJson(github.event.pull_request.labels) }}
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          LABELS=$(echo "$LABELS_JSON" | jq .[].name)
           echo "LABELS: $LABELS"
           LATEST=$(gh release view --json tagName --jq '.tagName')
           echo "Latest release: $LATEST"
           
+          if echo "$COMMIT_MSG" | grep -q "major"; then
+            NEW_TAG="v$((MAJOR + 1)).0.0"
+          elif echo "$COMMIT_MSG" | grep -q "minor"; then
+            NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+          else
+            NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+
           # COMMIT_MSG=$(git log -1 --pretty=%B)
           # echo "Commit message: $COMMIT_MSG"
 
