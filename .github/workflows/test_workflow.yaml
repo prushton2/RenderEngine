@@ -30,7 +30,6 @@ jobs:
           MINOR=$(echo $LATEST | cut -d. -f2)
           PATCH=$(echo $LATEST | cut -d. -f3)
 
-
           if echo "$LABELS" | grep -q "major"; then
             NEW_TAG="v$((MAJOR + 1)).0.0"
           elif echo "$LABELS" | grep -q "minor"; then
@@ -39,8 +38,8 @@ jobs:
             NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
           fi
 
+          echo "New Release: $NEW_TAG"
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "$NEW_TAG"
 
 
       # - name: Install dependencies
