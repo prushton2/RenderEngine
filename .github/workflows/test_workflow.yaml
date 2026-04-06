@@ -41,31 +41,4 @@ jobs:
           echo "New Release: $NEW_TAG"
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
-
-      # - name: Install dependencies
-      #   run: |
-      #     rustup target add x86_64-pc-windows-gnu
-      #     sudo apt-get install -y mingw-w64
-
-
-      # - name: Build Linux Release
-      #   run: |
-      #     cargo build --release
-      #     mv target/release/RenderEngine ./RenderEngine-linux
-      # - name: Build Windows Release
-      #   run: |
-      #     cargo build --release --target x86_64-pc-windows-gnu
-      #     mv target/x86_64-pc-windows-gnu/release/RenderEngine.exe ./RenderEngine-windows.exe
-
-
-      # - name: Create Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     tag_name: ${{ steps.version.outputs.tag }}
-      #     name: Release ${{ steps.version.outputs.tag }}
-      #     generate_release_notes: true  # auto-generates notes from commits/PRs
-      #     files: |
-      #       ./RenderEngine-linux
-      #       ./RenderEngine-windows.exe
-
       - run: echo "This job's status is ${{ job.status }}."
