@@ -27,8 +27,8 @@ struct App {
     gpu:    wgpu_handler::GpuHandler,
 
     // scene
-    player:  Arc<RwLock<object::Player>>,
-    objects: Arc<Vec<Box<dyn object::Renderable + Send + Sync>>>,
+    player:  RwLock<object::Player>,
+    objects: Vec<Box<dyn object::Renderable + Send + Sync>>,
 
     // input
     keyboard:    HashMap<KeyCode, bool>,
@@ -45,11 +45,11 @@ struct App {
 
 impl App {
     pub fn consume_player(&mut self, player: object::Player) {
-        self.player = Arc::new(RwLock::new(player));
+        self.player = RwLock::new(player);
     }
 
     pub fn consume_objects(&mut self, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
-        self.objects = Arc::new(objects);
+        self.objects = objects;
     }
 
     pub fn handle_movement(&mut self) {
@@ -179,8 +179,8 @@ impl Default for App {
             window: None,
             gpu:    wgpu_handler::GpuHandler::default(),
 
-            player:  Arc::new(RwLock::new(object::Player::new(object::Camera::zero()))),
-            objects: Arc::new(vec![]),
+            player:  RwLock::new(object::Player::new(object::Camera::zero())),
+            objects: vec![],
 
             keyboard:    HashMap::new(),
             mouse_delta: (0.0, 0.0),
@@ -271,7 +271,8 @@ impl ApplicationHandler for App {
                 print!("\x1B[2J\x1B[1;1H");
                 println!(" FPS: {}\n\n Time between frames: {}ms\n\n Camera position: {:?}\n Player Rotation: {:?}", self.fps_stat, self.deltatime_stat, player.get_camera().pos(), player.get_rotation());
 
-                // this makes the deltatime not crash out when the fps gets too high
+                // this makes the deltatime not crash out when the fps gets too high,
+                // but caps the fps at 1000
                 if self.deltatime < 1.0 { 
                     std::thread::sleep(std::time::Duration::from_millis(1));
                 }
@@ -362,6 +363,7 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.49, GpuMaterial::new(0x00000000,  0, 50))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.49, GpuMaterial::new(0x00FF0000,  0,  0))),
 
+        // mirror sphere
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.0, 3.0), 2.0,  GpuMaterial::new(0x00AAAAAA, 90,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
     ];

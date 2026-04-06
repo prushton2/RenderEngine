@@ -60,5 +60,3 @@ impl Player {
         self.camera.update_outputs();
     }
 }
-
-unsafe impl Sync for Player {}
