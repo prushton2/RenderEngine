@@ -19,8 +19,10 @@ jobs:
         id: version
         env:
           LABELS: ${{ toJson(github.event.pull_request.labels) }}
+          LATEST: $(gh release view --json tagName --jq '.tagName')
         run: |
           echo "LABELS: $LABELS"
+          echo "Latest release: $LATEST"
           
           # COMMIT_MSG=$(git log -1 --pretty=%B)
           # echo "Commit message: $COMMIT_MSG"
