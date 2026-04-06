@@ -213,6 +213,8 @@ impl ApplicationHandler for App {
         // wgpu init is async but resumed() isn't — use pollster to block
         pollster::block_on(self.gpu.init(window.clone(), WIDTH as u32, HEIGHT as u32));
 
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+
         self.window = Some(window);
     }
 

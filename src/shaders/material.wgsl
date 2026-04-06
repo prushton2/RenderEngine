@@ -93,7 +93,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             pushed_to_stack = true;
         }
 
-        var lit_color = textureLoad(textures, vec2u(0, 0), 0).rgb;
+        var lit_color = textureLoad(textures, vec2u(0, 0), 0).rgb * 255.0;
 
         if material.reflect + material.translucent < 100 {
             let light = max(dot(record.normal, light_dir), 0.0);

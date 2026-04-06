@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use std::io::Cursor;
 use image::ImageReader;
+use wgpu::{Texture, TextureView};
 use winit::window::{Window};
 
 use crate::object;
@@ -19,6 +19,9 @@ pub struct GpuHandler {
     pub spheres_buf:      Option<wgpu::Buffer>,
     pub quads_buf:        Option<wgpu::Buffer>,
     pub output_buf_size:  Option<u64>,
+
+    texture: Option<Texture>,
+    view: Option<TextureView>
 }
 
 #[allow(unused)]
@@ -51,6 +54,7 @@ pub struct GpuStateMut<'a> { // makes my life infinitely easier
     pub spheres_buf:      &'a mut wgpu::Buffer,
     pub quads_buf:        &'a mut wgpu::Buffer,
     pub output_buf_size:  &'a mut u64,
+    pub view:             &'a mut TextureView,
 }
 
 impl GpuHandler {
@@ -71,6 +75,7 @@ impl GpuHandler {
                 spheres_buf:      self.spheres_buf.as_mut()?,
                 quads_buf:        self.quads_buf.as_mut()?,
                 output_buf_size:  self.output_buf_size.as_mut()?,
+                view:             self.view.as_mut()?,
             }
         )
     }
@@ -122,6 +127,7 @@ impl GpuHandler {
                     wgpu::BindGroupEntry { binding: 1, resource: gpu.output_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 2, resource: gpu.spheres_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 3, resource: gpu.quads_buf.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(gpu.view)},
                 ],
             });
 
@@ -152,7 +158,7 @@ impl GpuHandler {
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             width: width,
             height: height,
             present_mode: wgpu::PresentMode::Mailbox,
@@ -170,22 +176,24 @@ impl GpuHandler {
             depth_or_array_layers: 1,
         };
 
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
+        self.texture = Some(device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Dirt"),
             size: texture_size,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
-        });
+        }));
 
         let rgba_data = ImageReader::open("textures/dirt.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw();
 
+        // println!("First 4 bytes of image: {:?}", &rgba_data[0..4]);
+
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
-                texture: &texture,
+                texture: self.texture.as_ref().expect(""),
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
@@ -199,7 +207,7 @@ impl GpuHandler {
             texture_size,
         );
 
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        self.view = Some(self.texture.as_ref().expect("").create_view(&wgpu::TextureViewDescriptor::default()));
 
         // --- buffers ---
 
@@ -316,7 +324,7 @@ impl GpuHandler {
                 wgpu::BindGroupEntry { binding: 1, resource: output_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 2, resource: spheres_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 3, resource: quads_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(&view)},
+                wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(self.view.as_ref().expect(""))},
             ],
         });
 
@@ -362,6 +370,8 @@ impl GpuHandler {
             cache: None,
         });
 
+        queue.submit([]);
+
         // i opted to set them all at the end so im not wrapping everything in Some() and .unwrap()
         self.device = Some(device);
         self.queue = Some(queue);
@@ -393,6 +403,8 @@ impl Default for GpuHandler {
             spheres_buf:      None,
             quads_buf:        None,
             output_buf_size:  None,
+            texture: None,
+            view: None
         }
     }
 }
