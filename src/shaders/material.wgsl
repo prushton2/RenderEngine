@@ -98,9 +98,9 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
         if material.reflect + material.translucent < 100 {
             let light = max(dot(record.normal, light_dir), 0.0);
             lit_color = vec3<f32>(
-                ((lit_color.x + 128.0*light)/2),
-                ((lit_color.y + 128.0*light)/2),
-                ((lit_color.z + 128.0*light)/2),
+                ((lit_color.x + 64.0*light)/2),
+                ((lit_color.y + 64.0*light)/2),
+                ((lit_color.z + 64.0*light)/2),
             );
         }
 
