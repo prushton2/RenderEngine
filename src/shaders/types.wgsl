@@ -40,6 +40,7 @@ struct Material {
     color: vec3<f32>,
     reflect: u32,
     translucent: u32,
+    texture_id: i32,
 }
 
 @group(0) @binding(0) var<uniform>               uniforms:  Uniform;

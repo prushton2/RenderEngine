@@ -93,7 +93,12 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             pushed_to_stack = true;
         }
 
-        var lit_color = textureLoad(textures, vec2u(0, 0), 0).rgb * 255.0;
+        var lit_color = vec3<f32>(0.0, 0.0, 0.0);
+        if material.texture_id != -1 {
+            lit_color = textureLoad(textures, vec2u(0, 16 * u32(material.texture_id)), 0).rgb * 255.0;
+        } else {
+            lit_color = material.color;
+        }
 
         if material.reflect + material.translucent < 100 {
             let light = max(dot(record.normal, light_dir), 0.0);
@@ -106,7 +111,10 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
 
         if !pushed_to_stack {
             call = callstack[tid][index];
-            var color = f32(material.translucent) * call.outputs[0] + f32(material.reflect) * call.outputs[1] + f32(100 - material.translucent - material.reflect) * lit_color;
+            var color = f32(material.translucent) * call.outputs[0] + 
+                        f32(material.reflect) * call.outputs[1] + 
+                        f32(100 - material.translucent - material.reflect) * lit_color;
+
             color = color / 100.0;
 
             if call.caller != -1 {

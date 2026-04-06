@@ -211,7 +211,13 @@ impl ApplicationHandler for App {
         window.set_cursor_visible(false);
 
         // wgpu init is async but resumed() isn't — use pollster to block
-        pollster::block_on(self.gpu.init(window.clone(), WIDTH as u32, HEIGHT as u32));
+        pollster::block_on(
+            self.gpu.init(
+                window.clone(), 
+                WIDTH as u32, 
+                HEIGHT as u32, 
+            vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"])
+        );
 
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
@@ -370,13 +376,13 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
 
         // grass block
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 6.0), &ds::Vector3::new(0.0, 0.0,-1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 5.0), &ds::Vector3::new(-1.0,0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::new(0x00888888, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 6.0), &ds::Vector3::new(0.0, 0.0,-1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 5.0), &ds::Vector3::new(-1.0,0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 1.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::new(0x00888888, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::new(0x00888888, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 1.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(2, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(0, 0, 0))),
 
     ];
 

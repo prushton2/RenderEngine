@@ -136,7 +136,7 @@ impl GpuHandler {
     }
 
     // vibecoded but man thats a lot
-    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32) {
+    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, texture_paths: Vec<&str>) {
         // --- get a handle to the graphics card ---
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();
@@ -170,9 +170,18 @@ impl GpuHandler {
         surface.configure(&device, &surface_config);
 
         // --- textures ---
+
+        let mut rgba_data: Vec<u8> = vec![];
+
+        for path in &texture_paths {
+            rgba_data.extend_from_slice(
+                &ImageReader::open(path).expect("No image").decode().expect("Bad decode").to_rgba8().into_raw()
+            );
+        }
+
         let texture_size = wgpu::Extent3d {
             width: 16,
-            height: 16,
+            height: 16*texture_paths.len() as u32,
             depth_or_array_layers: 1,
         };
 
@@ -187,10 +196,6 @@ impl GpuHandler {
             view_formats: &[],
         }));
 
-        let rgba_data = ImageReader::open("textures/dirt.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw();
-
-        // println!("First 4 bytes of image: {:?}", &rgba_data[0..4]);
-
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
                 texture: self.texture.as_ref().expect(""),
@@ -202,7 +207,7 @@ impl GpuHandler {
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * 16), // 4 bytes per pixel * width
-                rows_per_image: Some(16),
+                rows_per_image: Some(16 * texture_paths.len() as u32),
             },
             texture_size,
         );
