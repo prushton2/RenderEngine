@@ -148,5 +148,5 @@ fn get_texture_color(record: HitRecord) -> vec3<f32> {
     let pct_across = u32(abs((dot(cross(quad.v, record.normal), record.position - quad.q))*16 / length(quad.v)));
     let pct_up     = u32(abs((dot(cross(quad.u, record.normal), record.position - quad.q))*16 / length(quad.u)));
 
-    return textureLoad(textures, vec2u(pct_across, (15-pct_up) + 16 * u32(material.texture_id)), 0).rgb * 255.0;
+    return textureLoad(textures, vec2u((15-pct_across), (15-pct_up) + 16 * u32(material.texture_id)), 0).rgb * 255.0;
 }
