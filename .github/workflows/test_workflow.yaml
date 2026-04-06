@@ -15,43 +15,45 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v5
 
-
       - name: Get next version
         id: version
+        env:
+          LABELS: ${{ toJson(github.event.pull_request.labels) }}
         run: |
-          echo "LABELS: ${{ github.event.pull_request.labels }}"
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
+          echo "LABELS: $LABELS"
+          
+          # COMMIT_MSG=$(git log -1 --pretty=%B)
+          # echo "Commit message: $COMMIT_MSG"
 
-          # Check for explicit version e.g. "version: 1.2.0"
-          EXPLICIT=$(echo "$COMMIT_MSG" | grep -oP 'version:\s*\K[0-9]+\.[0-9]+\.[0-9]+')
+          # # Check for explicit version e.g. "version: 1.2.0"
+          # EXPLICIT=$(echo "$COMMIT_MSG" | grep -oP 'version:\s*\K[0-9]+\.[0-9]+\.[0-9]+')
 
-          if [ -n "$EXPLICIT" ]; then
-            NEW_TAG="v$EXPLICIT"
-          else
-            LATEST=$(git tag --sort=-v:refname | head -n1)
-            LATEST=${LATEST:-v0.0.0}
-            MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
-            MINOR=$(echo $LATEST | cut -d. -f2)
-            PATCH=$(echo $LATEST | cut -d. -f3)
+          # if [ -n "$EXPLICIT" ]; then
+          #   NEW_TAG="v$EXPLICIT"
+          # else
+          #   LATEST=$(git tag --sort=-v:refname | head -n1)
+          #   LATEST=${LATEST:-v0.0.0}
+          #   MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d v)
+          #   MINOR=$(echo $LATEST | cut -d. -f2)
+          #   PATCH=$(echo $LATEST | cut -d. -f3)
 
-            if echo "$COMMIT_MSG" | grep -q "#major"; then
-              NEW_TAG="v$((MAJOR + 1)).0.0"
-            elif echo "$COMMIT_MSG" | grep -q "#minor"; then
-              NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
-            else
-              NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
-            fi
-          fi
+          #   if echo "$COMMIT_MSG" | grep -q "#major"; then
+          #     NEW_TAG="v$((MAJOR + 1)).0.0"
+          #   elif echo "$COMMIT_MSG" | grep -q "#minor"; then
+          #     NEW_TAG="v$MAJOR.$((MINOR + 1)).0"
+          #   else
+          #     NEW_TAG="v$MAJOR.$MINOR.$((PATCH + 1))"
+          #   fi
+          # fi
 
-          echo "Version: $NEW_TAG"
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          # echo "Version: $NEW_TAG"
+          # echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
 
-      - name: Install dependencies
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          sudo apt-get install -y mingw-w64
+      # - name: Install dependencies
+      #   run: |
+      #     rustup target add x86_64-pc-windows-gnu
+      #     sudo apt-get install -y mingw-w64
 
 
       # - name: Build Linux Release
