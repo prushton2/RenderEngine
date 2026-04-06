@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use std::io::Cursor;
+use image::ImageReader;
 use winit::window::{Window};
 
 use crate::object;
@@ -161,6 +163,44 @@ impl GpuHandler {
 
         surface.configure(&device, &surface_config);
 
+        // --- textures ---
+        let texture_size = wgpu::Extent3d {
+            width: 16,
+            height: 16,
+            depth_or_array_layers: 1,
+        };
+
+        let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Dirt"),
+            size: texture_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+
+        let rgba_data = ImageReader::open("textures/dirt.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw();
+
+        queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: &texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            &rgba_data, // Your pixel bytes
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * 16), // 4 bytes per pixel * width
+                rows_per_image: Some(16),
+            },
+            texture_size,
+        );
+
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
         // --- buffers ---
 
         let uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
@@ -254,6 +294,17 @@ impl GpuHandler {
                     },
                     count: None,
                 },
+                // textures
+                wgpu::BindGroupLayoutEntry {
+                    binding: 4,
+                    visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE, // Usually read in fragment shaders
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                    },
+                    count: None,
+                }
             ],
         });
 
@@ -265,6 +316,7 @@ impl GpuHandler {
                 wgpu::BindGroupEntry { binding: 1, resource: output_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 2, resource: spheres_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 3, resource: quads_buf.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(&view)},
             ],
         });
 

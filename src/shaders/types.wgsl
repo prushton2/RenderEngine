@@ -46,7 +46,8 @@ struct Material {
 @group(0) @binding(1) var<storage, read_write>     output:  array<u32>;
 @group(0) @binding(2) var<storage, read>          spheres:  array<Sphere>;
 @group(0) @binding(3) var<storage, read>            quads:  array<Quad>;
-
+@group(0) @binding(4) var                        textures: texture_2d<f32>;
+@group(0) @binding(5) var                 texture_sampler: sampler;
 
 fn ray_at(ray_pos: vec3<f32>, ray_dir: vec3<f32>, t: f32) -> vec3<f32> {
     return ray_pos + t * ray_dir;

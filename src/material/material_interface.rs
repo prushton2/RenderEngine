@@ -1,7 +1,7 @@
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct GpuMaterial {
-    color:       [f32; 3],
+    color:      [f32; 3],
     reflective:  u32,
     translucent: u32,
     _pad0:       u32,
