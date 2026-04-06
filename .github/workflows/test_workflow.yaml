@@ -19,7 +19,7 @@ jobs:
       - name: Get next version
         id: version
         run: |
-          echo "${{ toJson(github.event.pull_request.labels) }}"
+          echo "${{ github.event.pull_request.labels }}"
           COMMIT_MSG=$(git log -1 --pretty=%B)
           echo "Commit message: $COMMIT_MSG"
 
