@@ -367,8 +367,8 @@ fn main() {
         //
         Box::new(object::Sphere::new(&ds::Vector3::new(-3.25, -0.8, 6.0), 0.5,  GpuMaterial::new(0x0000FF00,  0,  0))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.75, -0.8, 6.0), 0.5,  GpuMaterial::new(0x000000FF,  0,  0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5,  GpuMaterial::new(0x00FF0000, 50,  0))),
-        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.49, GpuMaterial::new(0x00000000,  0, 50))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   0.0, 6.0), 0.5,  GpuMaterial::new(0x00FF69B4, 50,  0))),
+        Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   1.0, 6.0), 0.49, GpuMaterial::new(0x00FF69B4,  0, 50))),
         Box::new(object::Sphere::new(&ds::Vector3::new(-4.0,   2.0, 6.0), 0.49, GpuMaterial::new(0x00FF0000,  0,  0))),
 
         // mirror sphere

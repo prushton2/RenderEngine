@@ -95,7 +95,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
 
         var lit_color = vec3<f32>(0.0, 0.0, 0.0);
         if material.texture_id != -1 {
-            lit_color = textureLoad(textures, vec2u(0, 16 * u32(material.texture_id)), 0).rgb * 255.0;
+            lit_color = get_texture_color(record);
         } else {
             lit_color = material.color;
         }
@@ -124,8 +124,29 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
                 return (u32(color.x) << 16) | (u32(color.y) << 8) | (u32(color.z));
             }
         }
-
     }
 
     return 0x00BADBEDu;
+}
+
+fn get_texture_color(record: HitRecord) -> vec3<f32> {
+    var material: Material;
+    var quad: Quad;
+
+    switch record.obj_type {
+        case 0u: {
+            material = spheres[record.obj_index].material;
+            return material.color; // only works on quads for now
+        }
+        case 1u: {
+            material = quads[record.obj_index].material;
+            quad = quads[record.obj_index];
+        }
+        default: {}
+    }
+
+    let pct_across = u32(abs((dot(cross(quad.v, record.normal), record.position - quad.q))*16 / length(quad.v)));
+    let pct_up     = u32(abs((dot(cross(quad.u, record.normal), record.position - quad.q))*16 / length(quad.u)));
+
+    return textureLoad(textures, vec2u(pct_across, (15-pct_up) + 16 * u32(material.texture_id)), 0).rgb * 255.0;
 }
