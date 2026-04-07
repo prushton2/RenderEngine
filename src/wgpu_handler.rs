@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use image::ImageReader;
-use wgpu::{Texture, TextureView};
+use wgpu::{SurfaceTexture, Texture, TextureView};
 use winit::window::{Window};
 
-use crate::object;
+use crate::object::{self, camera::GpuUniform, quad::GpuQuad, sphere::GpuSphere};
 
 pub struct GpuHandler {
     pub device:           Option<wgpu::Device>,
@@ -133,6 +133,79 @@ impl GpuHandler {
 
             self.output_buf_size = Some((width * height) as u64);
         }
+    }
+
+    pub fn draw_frame(&self, spheres: &Vec<GpuSphere>, quads: &Vec<GpuQuad>, uniform: &mut GpuUniform) -> Option<SurfaceTexture> {
+        let gpu = match self.get_state() {
+            Some(t) => t,
+            None => return None
+        };
+        
+        // ensure these are correct
+        uniform.sphere_count = spheres.len() as u32;
+        uniform.quad_count = quads.len() as u32;
+
+        // upload to buffer
+        gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(uniform));
+        gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(spheres));
+        gpu.queue.write_buffer(gpu.quads_buf, 0, bytemuck::cast_slice(quads));
+
+        // surface that we draw to
+        let frame = match gpu.surface.get_current_texture() {
+            Ok(f) => f,
+            Err(_) => {
+                gpu.surface.configure(gpu.device, gpu.surface_config);
+                return None;
+            }
+        };
+
+        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("frame")
+        });
+
+        // step 1 — compute pass, ray traces into output[]
+        {
+            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("raytrace"),
+                timestamp_writes: None
+            });
+            pass.set_pipeline(gpu.compute_pipeline);
+            pass.set_bind_group(0, gpu.bind_group, &[]);
+            pass.dispatch_workgroups(
+                (gpu.surface_config.width  + 7) / 8,
+                (gpu.surface_config.height + 7) / 8,
+                1
+            );
+        }
+
+        // step 2 — render pass, copies output[] to screen
+        {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("blit"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load:  wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            pass.set_pipeline(gpu.render_pipeline);
+            pass.set_bind_group(0, gpu.bind_group, &[]);
+            pass.draw(0..3, 0..1);
+        }
+
+        // submit the frame and return it for the caller to present it
+        gpu.queue.submit(std::iter::once(encoder.finish()));
+
+        return Some(frame)
+
     }
 
     // vibecoded but man thats a lot
@@ -408,8 +481,8 @@ impl Default for GpuHandler {
             spheres_buf:      None,
             quads_buf:        None,
             output_buf_size:  None,
-            texture: None,
-            view: None
+            texture:          None,
+            view:             None
         }
     }
 }
