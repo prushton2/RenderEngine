@@ -89,15 +89,11 @@ impl App {
     }
 
     pub fn render(&self) -> Option<wgpu::SurfaceTexture> {
-        let gpu = match self.gpu.get_state() {
-            Some(t) => t,
-            None => return None
-        };
 
         let player = self.player.read().unwrap();
 
-        // upload uniforms
-        let mut uniforms = player.get_camera().to_gpu();
+        // downcast objects
+        let mut uniform = player.get_camera().to_gpu();
 
         let gpu_spheres: Vec<object::sphere::GpuSphere> = self.objects.iter()
             .filter_map(|o| o.as_any().downcast_ref::<object::Sphere>())
@@ -109,67 +105,7 @@ impl App {
             .map(|s| s.to_gpu())
             .collect();
         
-        uniforms.sphere_count = gpu_spheres.len() as u32;
-        uniforms.quad_count = gpu_quads.len() as u32;
-        
-        gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(&uniforms));
-        gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(&gpu_spheres));
-        gpu.queue.write_buffer(gpu.quads_buf, 0, bytemuck::cast_slice(&gpu_quads));
-
-        let frame = match gpu.surface.get_current_texture() {
-            Ok(f) => f,
-            Err(_) => {
-                gpu.surface.configure(gpu.device, gpu.surface_config);
-                return None;
-            }
-        };
-
-        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("frame")
-        });
-
-        // step 1 — compute pass, ray traces into output[]
-        {
-            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("raytrace"),
-                timestamp_writes: None
-            });
-            pass.set_pipeline(gpu.compute_pipeline);
-            pass.set_bind_group(0, gpu.bind_group, &[]);
-            pass.dispatch_workgroups(
-                (gpu.surface_config.width  + 7) / 8,
-                (gpu.surface_config.height + 7) / 8,
-                1
-            );
-        }
-
-        // step 2 — render pass, copies output[] to screen
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("blit"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load:  wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-            pass.set_pipeline(gpu.render_pipeline);
-            pass.set_bind_group(0, gpu.bind_group, &[]);
-            pass.draw(0..3, 0..1);
-        }
-
-        // submit the frame and return it for the caller to present it
-        gpu.queue.submit(std::iter::once(encoder.finish()));
-
-        return Some(frame)
+        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &mut uniform);
     }
 }
 
