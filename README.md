@@ -4,7 +4,16 @@ This is a custom render engine written in rust and WGSL.
 
 ## Features
 
-This render engine provides rendering spheres and quads. These come with a material that takes three parameters: color, reflectivity, and translucency. The material allows you to combine properties in one material. Spheres can be rendered from inside, so feel free to go inside the sphere on the right for a weird experience. Note that a ray can only be recast 4 times before it returns the color of the material it hits instead of casting further.
+### Shapes
+The render engine provides quads and spheres for rendering.
+
+### Materials
+A Material will let you determine either a solid color or a source texture (only on quads), and also define how translucent and reflective the material is.
+
+When using textures, you must include the paths of your textures in `GpuHandler::init`. When referencing the texture, the `texture_id` of any texture is the order they are listed in `GpuHandler::init`.
+
+### GPU Rendering
+The `wgpu_handler.rs` file provides heavy abstractions for handling rendering on the gpu.
 
 ## Running
 
@@ -20,9 +29,3 @@ $ cargo run --release
 ### Movement
 
 In the window, you can use WASD to move and your mouse or the arrow keys to look around. Space and LCtrl make you move up and down respectively.
-
-## Expansion
-
-Expansion upon this isnt very well supported currently. I have some refactoring to do to make it more manageable. The main issue is once you start dealing with sending stuff to the gpu, where dynamic dispatching doesnt exist.
-
-If you really want to add a new renderable object, you must implement Renderable and ToGpu for your object. See `src/objects/sphere.rs` for an example. Next, create a buffer in `main.rs` for the GPU version of your object to be sent to the GPU. You must create a field in App for the buffer, instantiate, and bind the buffer. In WGSL, add intersection in `intersection.wgsl`, and in `material.wgsl`, add a dereference for the material.
