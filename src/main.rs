@@ -320,6 +320,8 @@ fn main() {
         Box::new(object::Quad::new(&ds::Vector3::new(1.0, 1.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(2, 0, 0))),
         Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(0, 0, 0))),
 
+        Box::new(object::Quad::new(&ds::Vector3::new(10.0, 2.0, 7.0), &ds::Vector3::new(0.5, 1.0, 0.5), &ds::Vector3::new(1.0, 0.5, 0.0), GpuMaterial::texture(0, 0, 0))),
+
     ];
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
