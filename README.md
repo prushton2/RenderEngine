@@ -2,6 +2,15 @@
 
 This is a custom render engine written in rust and WGSL.
 
+## Arguments
+
+| Flag | Long | Short | Default
+|--|--|--|--|
+| Resolution | --resolution | -r | 1280x720
+| Mouse sensitivity | --sensitivity | -s | 0.001
+| Max framerate | --framelimit | -f | 144
+| Camera speed | --movespeed | -c | 1.5
+
 ## Features
 
 ### Shapes

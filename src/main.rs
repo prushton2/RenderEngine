@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
+use clap::Parser;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -16,10 +17,41 @@ mod material;
 mod object;
 mod ds;
 
-const WIDTH: usize = 1280;
-const HEIGHT: usize = 720;
-const SENSITIVITY: f64 = 0.001;
-const SPEED: f64 = 1.5;
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Arguments {
+    #[arg(short, long, default_value_t = String::from("1280x720"))]
+    pub resolution: String,
+
+    #[arg(short, long, default_value_t = 0.001)]
+    pub sensitivity: f64,
+
+    #[arg(short, long, default_value_t = 144)]
+    pub framelimit: u64,
+
+    #[arg(short, long, default_value_t = 1.5)]
+    pub movespeed: f64,
+
+    #[arg(default_value_t = 1920)]
+    pub width: usize,
+    #[arg(default_value_t = 1080)]
+    pub height: usize,
+}
+
+impl Arguments {
+    fn update(&mut self) {
+        let mut split = self.resolution.split('x');
+        let res_err = "Invalid resolution";
+        (self.width, self.height) = (
+            split.next().expect(res_err).parse().expect(res_err),
+            split.next().expect(res_err).parse().expect(res_err)
+        );
+
+        if self.framelimit > 1000 {
+            self.framelimit = 1000;
+        }
+    }
+}
 
 struct App {
     // window
@@ -28,11 +60,12 @@ struct App {
 
     // scene
     player:  RwLock<object::Player>,
-    objects: Vec<Box<dyn object::Renderable + Send + Sync>>,
+    objects: Vec<Box<dyn object::Renderable>>,
 
     // input
-    keyboard:    HashMap<KeyCode, bool>,
+    keyboard:     HashMap<KeyCode, bool>,
     mouse_delta: (f64, f64),
+    config:       Arguments,
 
     // statistics
     last_frame: std::time::Instant,
@@ -44,12 +77,25 @@ struct App {
 }
 
 impl App {
-    pub fn consume_player(&mut self, player: object::Player) {
-        self.player = RwLock::new(player);
-    }
+    pub fn new(config: Arguments, player: object::Player, objects: Vec<Box<dyn object::Renderable>>) -> Self {
+        Self {
+            window: None,
+            gpu:    wgpu_handler::GpuHandler::default(),
 
-    pub fn consume_objects(&mut self, objects: Vec<Box<dyn object::Renderable + Send + Sync>>) {
-        self.objects = objects;
+            player:  RwLock::new(player),
+            objects: objects,
+
+            keyboard:     HashMap::new(),
+            mouse_delta: (0.0, 0.0),
+            config:       config,
+
+            last_frame: std::time::Instant::now(),
+            deltatime:  0.0,
+
+            fps_stat:         0,
+            deltatime_stat:   0,
+            statistics_timer: std::time::Instant::now(),
+        }
     }
 
     pub fn handle_movement(&mut self) {
@@ -72,7 +118,7 @@ impl App {
 
         for (key, dir) in key_movements {
             if self.keyboard.get(key) == Some(&true) {
-                player_ref.move_player(&(dir * SPEED * self.deltatime));
+                player_ref.move_player(&(dir * self.config.movespeed * self.deltatime));
             }
         }
 
@@ -109,35 +155,13 @@ impl App {
     }
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            window: None,
-            gpu:    wgpu_handler::GpuHandler::default(),
-
-            player:  RwLock::new(object::Player::new(object::Camera::zero())),
-            objects: vec![],
-
-            keyboard:    HashMap::new(),
-            mouse_delta: (0.0, 0.0),
-
-            last_frame: std::time::Instant::now(),
-            deltatime:  0.0,
-
-            fps_stat:         0,
-            deltatime_stat:   0,
-            statistics_timer: std::time::Instant::now(),
-        }
-    }
-}
-
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = Arc::new(
             event_loop.create_window(
                 Window::default_attributes()
                     .with_title("Render Engine")
-                    .with_inner_size(winit::dpi::LogicalSize::new(WIDTH as f64, HEIGHT as f64))
+                    .with_inner_size(winit::dpi::LogicalSize::new(self.config.width as f64, self.config.height as f64))
             ).unwrap()
         );
 
@@ -150,8 +174,8 @@ impl ApplicationHandler for App {
         pollster::block_on(
             self.gpu.init(
                 window.clone(), 
-                WIDTH as u32, 
-                HEIGHT as u32, 
+                self.config.width as u32, 
+                self.config.height as u32, 
             vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"])
         );
 
@@ -168,7 +192,7 @@ impl ApplicationHandler for App {
     ) {
         match event {
             DeviceEvent::MouseMotion { delta: (dx, dy) } => {
-                self.mouse_delta = (self.mouse_delta.0 + (dx as f64)*SENSITIVITY, self.mouse_delta.1 + (dy as f64)*SENSITIVITY);
+                self.mouse_delta = (self.mouse_delta.0 + (dx as f64)*self.config.sensitivity, self.mouse_delta.1 + (dy as f64)*self.config.sensitivity);
             },
             _ => {}
         }
@@ -217,8 +241,10 @@ impl ApplicationHandler for App {
 
                 // this makes the deltatime not crash out when the fps gets too high,
                 // but caps the fps at 1000
-                if self.deltatime < 1.0 { 
-                    std::thread::sleep(std::time::Duration::from_millis(1));
+                if self.deltatime < 1000.0/self.config.framelimit as f64 {
+                    let mut duration = std::time::Duration::from_millis(1000/self.config.framelimit);
+                    duration -= std::time::Duration::from_millis(self.deltatime as u64);
+                    std::thread::sleep(duration);
                 }
 
                 if let Some(window) = &self.window {
@@ -263,10 +289,13 @@ impl ApplicationHandler for App {
 fn main() {
     debug_assert_eq!(std::mem::size_of::<object::camera::GpuUniform>() % 256, 0);
 
+    let mut args = Arguments::parse();
+    args.update();
+
     let camera = object::Camera::new(
         ds::Vector3::new(0.0, 0.0, 0.0),
         3.0,
-        (WIDTH as f64, HEIGHT as f64),
+        (args.width as f64, args.height as f64),
         60.0
     );
 
@@ -274,7 +303,7 @@ fn main() {
         camera
     );
 
-    let objects: Vec<Box<dyn Renderable + Send + Sync>> = vec![
+    let objects: Vec<Box<dyn Renderable>> = vec![
 
 
         // three spheres
@@ -327,9 +356,7 @@ fn main() {
     let event_loop = EventLoop::new().expect("Failed to create event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::default();
-    app.consume_player(player);
-    app.consume_objects(objects);
+    let mut app = App::new(args, player, objects);
 
     event_loop.run_app(&mut app).expect("Event loop failed");
 }
