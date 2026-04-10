@@ -14,7 +14,6 @@ fn sphere_intersects(origin: vec3<f32>, dir: vec3<f32>, sphere: Sphere) -> f32 {
 
     if t1 > 0.0001 { return t1; }
     if t2 > 0.0001 { return t2; }
-    // return min(t1, t2);
     return -1.0;
 }
 
