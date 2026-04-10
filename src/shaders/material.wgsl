@@ -3,13 +3,13 @@ struct Call {
     caller:    i32,
     ray_dir:   vec3<f32>,
     output_id: u32,
-    outputs:   array<vec3<f32>, 3>,
+    outputs:   array<vec3<f32>, 2>,
     depth:     u32,
 }
 
 var<private> callstack: array<Call, 7>;
 
-fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
+fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>) -> u32 {
     var callstack_len = 1;
     let light_dir = vec3<f32>(0.57735,0.57735,0);
 
@@ -19,10 +19,9 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
     callstack[0].output_id = 0u;
     callstack[0].outputs[0] = vec3<f32>(-1.0, -1.0, -1.0);
     callstack[0].outputs[1] = vec3<f32>(-1.0, -1.0, -1.0);
-    callstack[0].outputs[2] = vec3<f32>(-1.0, -1.0, -1.0);
     callstack[0].depth = 4u;
 
-    for (var i = 0; i < 32; i++) {
+    for (var i = 0; i < 16; i++) {
         if callstack_len == 0 { break; }
         let index = callstack_len-1;
         var call = callstack[index];
@@ -50,6 +49,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             continue;
         }
 
+        // dereference the material
         switch record.obj_type {
             case 0u: {
                 material = spheres[record.obj_index].material;
@@ -60,6 +60,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             default: {}
         }
 
+        // calculate the materials
         if material.translucent != 0u && call.outputs[0].x <= -1.0 {
             let new_origin = ray_at(call.ray_pos, call.ray_dir, record.t + 0.00001);
             
@@ -69,7 +70,6 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             callstack[callstack_len].output_id = 0;
             callstack[callstack_len].outputs[0] = vec3<f32>(-1.0, -1.0, -1.0);
             callstack[callstack_len].outputs[1] = vec3<f32>(-1.0, -1.0, -1.0);
-            callstack[callstack_len].outputs[2] = vec3<f32>(-1.0, -1.0, -1.0);
             callstack[callstack_len].depth = call.depth - 1;
 
             callstack_len += 1;
@@ -86,13 +86,13 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             callstack[callstack_len].output_id = 1;
             callstack[callstack_len].outputs[0] = vec3<f32>(-1.0, -1.0, -1.0);
             callstack[callstack_len].outputs[1] = vec3<f32>(-1.0, -1.0, -1.0);
-            callstack[callstack_len].outputs[2] = vec3<f32>(-1.0, -1.0, -1.0);
             callstack[callstack_len].depth = call.depth - 1;
 
             callstack_len += 1;
             pushed_to_stack = true;
         }
 
+        // lighting / texturing
         var lit_color = vec3<f32>(0.0, 0.0, 0.0);
         if material.texture_id != -1 {
             lit_color = get_texture_color(record);
@@ -109,6 +109,7 @@ fn ray_color(ray_pos: vec3<f32>, ray_dir: vec3<f32>, tid: u32) -> u32 {
             );
         }
 
+        // cleanup color
         if !pushed_to_stack {
             call = callstack[index];
             var color = f32(material.translucent) * call.outputs[0] + 

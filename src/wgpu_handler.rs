@@ -174,8 +174,8 @@ impl GpuHandler {
             pass.set_pipeline(gpu.compute_pipeline);
             pass.set_bind_group(0, gpu.bind_group, &[]);
             pass.dispatch_workgroups(
-                (gpu.surface_config.width  + 7) / 8,
-                (gpu.surface_config.height + 7) / 8,
+                (gpu.surface_config.width  + 15) / 16,
+                (gpu.surface_config.height + 15) / 16,
                 1
             );
         }
