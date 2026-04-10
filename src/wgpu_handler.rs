@@ -19,9 +19,8 @@ pub struct GpuHandler {
     pub spheres_buf:      Option<wgpu::Buffer>,
     pub quads_buf:        Option<wgpu::Buffer>,
     pub output_buf_size:  Option<u64>,
-
-    texture: Option<Texture>,
-    view: Option<TextureView>
+    texture:              Option<Texture>,
+    view:                 Option<TextureView>
 }
 
 #[allow(unused)]
