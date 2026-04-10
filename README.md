@@ -9,7 +9,8 @@ This is a custom render engine written in rust and WGSL.
 | Resolution | --resolution | -r | 1280x720
 | Mouse sensitivity | --sensitivity | -s | 0.001
 | Max framerate | --framelimit | -f | 144
-| Camera speed | --movespeed | -c | 1.5
+| Camera speed | --movespeed | -m | 1.5
+| Field of view | --fov | -v | 60.0
 
 ## Features
 
