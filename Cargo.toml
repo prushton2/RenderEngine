@@ -1,10 +1,18 @@
 [package]
 name = "RenderEngine"
+description = "A GPU ray tracing render engine"
 version = "1.93.0"
 edition = "2024"
 resolver = "2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "GPL-3.0"
+repository = "https://github.com/prushton2/RenderEngine"
+
+# Include the shaders
+include = [
+    "src/**/*",
+    "Cargo.toml",
+]
 
 [dependencies]
 auto_ops = "0.3.0"
@@ -21,3 +29,11 @@ winit = "0.30.12"
 
 [profile.release]
 debug = true
+
+[lib]
+name = "render_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "RenderEngine"
+path = "src/main.rs"

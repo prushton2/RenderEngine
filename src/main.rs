@@ -7,15 +7,11 @@ use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowId, CursorGrabMode};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use render_engine::{ds, material, object, wgpu_handler};
 
 use crate::material::GpuMaterial;
 use crate::object::Renderable;
 use crate::object::renderable::ToGpu;
-
-mod wgpu_handler;
-mod material;
-mod object;
-mod ds;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]

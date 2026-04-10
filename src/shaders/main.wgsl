@@ -24,7 +24,7 @@ fn main(
         return;
     }
 
-    output[idx] = ray_color(uniforms.pos, ray_dir, local_invocation_index);
+    output[idx] = ray_color(uniforms.pos, ray_dir);
 }
 
 // not sure what these do but docs say i need them
