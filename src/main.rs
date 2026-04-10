@@ -28,6 +28,9 @@ struct Arguments {
     #[arg(short, long, default_value_t = 1.5)]
     pub movespeed: f64,
 
+    #[arg(short = 'v', long, default_value_t = 60.0)]
+    pub fov: f64,
+
     #[arg(default_value_t = 1920)]
     pub width: usize,
     #[arg(default_value_t = 1080)]
@@ -292,7 +295,7 @@ fn main() {
         ds::Vector3::new(0.0, 0.0, 0.0),
         3.0,
         (args.width as f64, args.height as f64),
-        60.0
+        args.fov
     );
 
     let player = object::Player::new(
