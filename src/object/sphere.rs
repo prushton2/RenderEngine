@@ -38,6 +38,10 @@ impl Renderable for Sphere {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn center(&self) -> crate::ds::Vector3 {
+        self.center
+    }
 }
 
 impl ToGpu<GpuSphere> for Sphere {
