@@ -54,6 +54,33 @@ impl Renderable for Quad {
     fn center(&self) -> crate::ds::Vector3 {
         self.q + self.u/2.0 + self.v/2.0
     }
+
+    fn intersects(&self, ray: &ds::Ray) -> bool {
+        let denominator = self.normal.dot(&ray.direction);
+
+        if denominator.abs() < 0.00000001 {
+            return false;
+        }
+
+        let t = (self.d - self.normal.dot(&ray.origin)) / denominator;
+
+        if t < 0.0 { return false; }
+
+        let intersection = ray.at(t);
+        let planar_hit = intersection - self.q;
+
+        let u_len_sq = self.u.length_sq();
+        let v_len_sq = self.v.length_sq();
+
+        let alpha = self.u.dot(&planar_hit) / u_len_sq;
+        let beta =  self.v.dot(&planar_hit) / v_len_sq;
+
+        if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
+            return false;
+        }
+        
+        return true
+    }
 }
 
 impl ToGpu<GpuQuad> for Quad {

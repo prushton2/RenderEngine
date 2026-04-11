@@ -340,13 +340,13 @@ fn main() {
         Box::new(object::Sphere::new(&ds::Vector3::new(4.0,   0.3, 3.0), 0.25, GpuMaterial::new(0x000000FF,  0,  0))),
 
         // grass block
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 6.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 6.0), &ds::Vector3::new(0.0, 0.0,-1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(2.0, 0.0, 5.0), &ds::Vector3::new(-1.0,0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 0.5, -0.5,  5.5), &ds::Vector3::new( 1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 1.5, -0.5,  5.5), &ds::Vector3::new( 0.0, 0.0, 1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 0.5, -0.5,  6.5), &ds::Vector3::new( 0.0, 0.0,-1.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 1.5, -0.5,  6.5), &ds::Vector3::new(-1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 1.0, 0.0), GpuMaterial::texture(1, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 0.5,  0.5,  5.5), &ds::Vector3::new( 1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(2, 0, 0))),
+        Box::new(object::Quad::new(&ds::Vector3::new( 0.5, -0.5,  5.5), &ds::Vector3::new( 1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(0, 0, 0))),
 
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 1.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(2, 0, 0))),
-        Box::new(object::Quad::new(&ds::Vector3::new(1.0, 0.0, 5.0), &ds::Vector3::new(1.0, 0.0, 0.0), &ds::Vector3::new(0.0, 0.0, 1.0), GpuMaterial::texture(0, 0, 0))),
 
         Box::new(object::Quad::new(&ds::Vector3::new(10.0, 2.0, 7.0), &ds::Vector3::new(0.5, 1.0, 0.5), &ds::Vector3::new(1.0, 0.5, 0.0), GpuMaterial::texture(0, 0, 0))),
 
