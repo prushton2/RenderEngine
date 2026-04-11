@@ -50,6 +50,10 @@ impl Renderable for Quad {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn center(&self) -> crate::ds::Vector3 {
+        self.q + self.u/2.0 + self.v/2.0
+    }
 }
 
 impl ToGpu<GpuQuad> for Quad {
