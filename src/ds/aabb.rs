@@ -1,5 +1,4 @@
-use crate::ds;
-use crate::object::Intersectable;
+use crate::{ds, object::Renderable};
 
 pub struct Aabb { // Axis aligned bounding box
     x: ds::Interval,
@@ -47,7 +46,7 @@ impl Aabb {
     }
 }
 
-impl Intersectable for Aabb {
+impl Renderable for Aabb {
     fn intersects(&self, ray: &ds::Ray) -> bool {
         let axes = [ // each slab we check
             (&self.x, ray.origin.x, ray.direction.x),
@@ -81,5 +80,13 @@ impl Intersectable for Aabb {
             }
         }
         return true
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn center(&self) -> crate::ds::Vector3 {
+        ds::Vector3::new(self.x.middle(), self.y.middle(), self.z.middle())
     }
 }

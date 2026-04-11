@@ -56,4 +56,8 @@ impl Interval {
     pub fn max(&self) -> f64 {
         self.max
     }
+
+    pub fn middle(&self) -> f64 {
+        (self.max - self.min)/2.0 + self.min
+    }
 }

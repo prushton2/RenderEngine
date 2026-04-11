@@ -42,6 +42,23 @@ impl Renderable for Sphere {
     fn center(&self) -> crate::ds::Vector3 {
         self.center
     }
+
+    fn intersects(&self, ray: &ds::Ray) -> bool {
+        let oc = self.center - ray.origin;
+        let a  = ray.direction.dot(&ray.direction);
+        let h  = ray.direction.dot(&oc);
+        let c  = oc.dot(&oc) - self.radius * self.radius;
+        let discriminant = h*h - a*c;
+
+        if discriminant < 0.0 {
+            return false;
+        }
+
+        let t1 = (h - discriminant.sqrt()) / a;
+        let t2 = (h + discriminant.sqrt()) / a;
+
+        return t1 > 1e-8 || t2 > 1e-8
+    }
 }
 
 impl ToGpu<GpuSphere> for Sphere {
