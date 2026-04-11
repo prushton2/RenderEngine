@@ -19,8 +19,8 @@ fn main(
 
     let idx = y * uniforms.width + x;
     
-    if uniforms.sphere_count == 0u {
-        output[idx] = 0x00FF0000u; // red = sphere_count is 0
+    if uniforms.sphere_count == 0u && uniforms.quad_count == 0u {
+        output[idx] = 0x00FF0000u;
         return;
     }
 
