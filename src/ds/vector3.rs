@@ -1,8 +1,9 @@
 use auto_ops::*;
 use rand;
 use rand::RngExt;
+use std::hash::{Hash, Hasher};
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Vector3 {
     pub x: f64,
     pub y: f64, 
@@ -88,6 +89,24 @@ impl Vector3 {
             y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x
         }
+    }
+}
+
+impl PartialEq for Vector3 {
+    fn eq(&self, other: &Self) -> bool {
+        self.x.to_bits() == other.x.to_bits() &&
+        self.y.to_bits() == other.y.to_bits() &&
+        self.z.to_bits() == other.z.to_bits()
+    }
+}
+
+impl Eq for Vector3 {}
+
+impl Hash for Vector3 {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.to_bits().hash(state);
+        self.y.to_bits().hash(state);
+        self.z.to_bits().hash(state);
     }
 }
 
