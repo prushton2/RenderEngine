@@ -55,16 +55,16 @@ impl Renderable for Quad {
         self.q + self.u/2.0 + self.v/2.0
     }
 
-    fn intersects(&self, ray: &ds::Ray) -> bool {
+    fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
         let denominator = self.normal.dot(&ray.direction);
 
         if denominator.abs() < 0.00000001 {
-            return false;
+            return None;
         }
 
         let t = (self.d - self.normal.dot(&ray.origin)) / denominator;
 
-        if t < 0.0 { return false; }
+        if t < 0.0 { return None; }
 
         let intersection = ray.at(t);
         let planar_hit = intersection - self.q;
@@ -76,10 +76,10 @@ impl Renderable for Quad {
         let beta =  self.v.dot(&planar_hit) / v_len_sq;
 
         if alpha < 0.0 || alpha > 1.0 || beta < 0.0 || beta > 1.0 {
-            return false;
+            return None;
         }
         
-        return true
+        return Some(t)
     }
 }
 

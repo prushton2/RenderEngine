@@ -43,7 +43,7 @@ impl Renderable for Sphere {
         self.center
     }
 
-    fn intersects(&self, ray: &ds::Ray) -> bool {
+    fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
         let oc = self.center - ray.origin;
         let a  = ray.direction.dot(&ray.direction);
         let h  = ray.direction.dot(&oc);
@@ -51,13 +51,16 @@ impl Renderable for Sphere {
         let discriminant = h*h - a*c;
 
         if discriminant < 0.0 {
-            return false;
+            return None;
         }
 
         let t1 = (h - discriminant.sqrt()) / a;
         let t2 = (h + discriminant.sqrt()) / a;
 
-        return t1 > 1e-8 || t2 > 1e-8
+        if t1 > 1e-8 { return Some(t1) }
+        if t2 > 1e-8 { return Some(t2) }
+
+        return None
     }
 }
 
