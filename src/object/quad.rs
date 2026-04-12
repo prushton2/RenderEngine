@@ -51,8 +51,12 @@ impl Renderable for Quad {
         self
     }
 
-    fn center(&self) -> crate::ds::Vector3 {
+    fn center(&self) -> ds::Vector3 {
         self.q + self.u/2.0 + self.v/2.0
+    }
+
+    fn normal(&self, _pos: &ds::Vector3) -> ds::Vector3 {
+        return self.normal;
     }
 
     fn intersects(&self, ray: &ds::Ray) -> Option<f64> {

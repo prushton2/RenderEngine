@@ -79,14 +79,39 @@ impl Renderable for Aabb {
                 return None;
             }
         }
-        return Some(t_enter);
+        
+        if t_enter >= 0.0 {
+            Some(t_enter)
+        } else if t_exit >= 0.0 {
+            Some(t_exit)  // origin is inside the box
+        } else {
+            None  // box is entirely behind the ray
+        }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 
-    fn center(&self) -> crate::ds::Vector3 {
+    fn center(&self) -> ds::Vector3 {
         ds::Vector3::new(self.x.middle(), self.y.middle(), self.z.middle())
+    }
+
+    fn normal(&self, pos: &ds::Vector3) -> ds::Vector3 {
+        let cx = self.x.middle();
+        let cy = self.y.middle();
+        let cz = self.z.middle();
+
+        let dx = (pos.x - cx).abs() / (self.x.size() / 2.0);
+        let dy = (pos.y - cy).abs() / (self.y.size() / 2.0);
+        let dz = (pos.z - cz).abs() / (self.z.size() / 2.0);
+
+        if dx >= dy && dx >= dz {
+            ds::Vector3::new((pos.x - cx).signum(), 0.0, 0.0)
+        } else if dy >= dz {
+            ds::Vector3::new(0.0, (pos.y - cy).signum(), 0.0)
+        } else {
+            ds::Vector3::new(0.0, 0.0, (pos.z - cz).signum())
+        }
     }
 }
