@@ -151,4 +151,7 @@ impl Camera {
     pub fn pos(&self) -> ds::Vector3 {
         return self.pos;
     }
+    pub fn dir(&self) -> ds::Vector3 {
+        return self.dir;
+    }
 }
