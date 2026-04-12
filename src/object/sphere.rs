@@ -43,6 +43,10 @@ impl Renderable for Sphere {
         self.center
     }
 
+    fn normal(&self, pos: &ds::Vector3) -> ds::Vector3 {
+        (pos - self.center).unit_vector()
+    }
+
     fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
         let oc = self.center - ray.origin;
         let a  = ray.direction.dot(&ray.direction);
