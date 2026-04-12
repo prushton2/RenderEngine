@@ -47,7 +47,7 @@ impl Aabb {
 }
 
 impl Renderable for Aabb {
-    fn intersects(&self, ray: &ds::Ray) -> bool {
+    fn intersects(&self, ray: &ds::Ray) -> Option<f64> {
         let axes = [ // each slab we check
             (&self.x, ray.origin.x, ray.direction.x),
             (&self.y, ray.origin.y, ray.direction.y),
@@ -61,7 +61,7 @@ impl Renderable for Aabb {
             if dir.abs() < f64::EPSILON {
                 // Ray is parallel to this slab — check if origin is inside it
                 if origin < interval.min() || origin > interval.max() {
-                    return false;
+                    return None;
                 }
                 continue;
             }
@@ -76,10 +76,10 @@ impl Renderable for Aabb {
             t_exit  = t_exit.min(t_far);
 
             if t_enter > t_exit {
-                return false;
+                return None;
             }
         }
-        return true
+        return Some(t_enter);
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
