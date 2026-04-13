@@ -4,7 +4,6 @@ use image::ImageReader;
 use wgpu::{SurfaceTexture, Texture, TextureView};
 use winit::window::{Window};
 
-use crate::object::renderable::ToGpu;
 use crate::object::{self, camera::GpuUniform, quad::GpuQuad, sphere::GpuSphere};
 use crate::ui::ui_element::GPUUIElement;
 use crate::ui::{self, UIElement};

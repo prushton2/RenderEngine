@@ -163,8 +163,10 @@ impl App {
             .filter_map(|o| o.as_any().downcast_ref::<object::Quad>())
             .map(|s| s.to_gpu())
             .collect();
+
+        let gpu_ui: Vec<ui::ui_element::GPUUIElement> = self.ui.iter().map(|s| s.to_gpu()).collect();
         
-        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &vec![], &mut uniform);
+        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &gpu_ui, &mut uniform);
     }
 }
 

@@ -31,6 +31,39 @@ fn main(
 @fragment
 fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let idx = u32(pos.y) * uniforms.width + u32(pos.x);
+
+    for (var i = 0u; i < uniforms.texture_count; i++) {
+        var ui_element = ui_info[i];
+        // ui_element.h_anchor = 0;
+        // ui_element.v_anchor = 0;
+        // ui_element.width = 1024;
+        // ui_element.height = 1024;
+        // ui_element.pointer = 0;
+        
+        let top_left_y = 0u;
+        let top_left_x = 0u;
+
+        if(
+            u32(pos.x) >= top_left_x && 
+            u32(pos.x) < top_left_x+ui_element.width &&
+            u32(pos.y) >= top_left_y &&
+            u32(pos.y) < top_left_y+ui_element.height
+        ) {
+            // we are inbound of the image, so draw the corresponding pixel
+
+            let rel_x = u32(pos.x) - top_left_x;
+            let rel_y = u32(pos.y) - top_left_y;
+
+            let c = ui_textures[ui_element.pointer + rel_x + rel_y*ui_element.width];
+            let r = f32((c >> 24u) & 0xFFu) / 255.0;
+            let g = f32((c >> 16u) & 0xFFu) / 255.0;
+            let b = f32((c >> 8u ) & 0xFFu) / 255.0;
+            let a = f32((c       ) & 0xFFu) / 255.0;
+
+            return vec4(r, g, b, a);
+        }
+    }
+
     let c = output[idx];
     let r = f32((c >> 16u) & 0xFFu) / 255.0;
     let g = f32((c >> 8u)  & 0xFFu) / 255.0;
