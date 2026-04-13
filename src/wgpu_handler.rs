@@ -4,57 +4,73 @@ use image::ImageReader;
 use wgpu::{SurfaceTexture, Texture, TextureView};
 use winit::window::{Window};
 
+use crate::object::renderable::ToGpu;
 use crate::object::{self, camera::GpuUniform, quad::GpuQuad, sphere::GpuSphere};
-use crate::ui::UIElement;
+use crate::ui::ui_element::GPUUIElement;
+use crate::ui::{self, UIElement};
 
 pub struct GpuHandler {
-    pub device:           Option<wgpu::Device>,
-    pub queue:            Option<wgpu::Queue>,
-    pub surface:          Option<wgpu::Surface<'static>>,
-    pub surface_config:   Option<wgpu::SurfaceConfiguration>,
-    pub compute_pipeline: Option<wgpu::ComputePipeline>,
-    pub render_pipeline:  Option<wgpu::RenderPipeline>,
-    pub bind_group:       Option<wgpu::BindGroup>,
-    pub uniform_buf:      Option<wgpu::Buffer>,
-    pub output_buf:       Option<wgpu::Buffer>,
-    pub spheres_buf:      Option<wgpu::Buffer>,
-    pub quads_buf:        Option<wgpu::Buffer>,
-    pub output_buf_size:  Option<u64>,
-    texture:              Option<Texture>,
-    view:                 Option<TextureView>
+    pub device:              Option<wgpu::Device>,
+    pub queue:               Option<wgpu::Queue>,
+    pub surface:             Option<wgpu::Surface<'static>>,
+    pub surface_config:      Option<wgpu::SurfaceConfiguration>,
+    pub compute_pipeline:    Option<wgpu::ComputePipeline>,
+    pub render_pipeline:     Option<wgpu::RenderPipeline>,
+    pub bind_group:          Option<wgpu::BindGroup>,
+    
+    pub uniform_buf:         Option<wgpu::Buffer>,
+    pub output_buf:          Option<wgpu::Buffer>,
+    pub spheres_buf:         Option<wgpu::Buffer>,
+    pub quads_buf:           Option<wgpu::Buffer>,
+    pub ui_element_info:     Option<wgpu::Buffer>,
+    pub ui_element_textures: Option<wgpu::Buffer>,
+
+    pub output_buf_size:     Option<u64>,
+    texture:                 Option<Texture>,
+    view:                    Option<TextureView>
 }
 
 #[allow(unused)]
 pub struct GpuState<'a> { // makes my life infinitely easier
-    pub device:           &'a wgpu::Device,
-    pub queue:            &'a wgpu::Queue,
-    pub surface:          &'a wgpu::Surface<'static>,
-    pub surface_config:   &'a wgpu::SurfaceConfiguration,
-    pub compute_pipeline: &'a wgpu::ComputePipeline,
-    pub render_pipeline:  &'a wgpu::RenderPipeline,
-    pub bind_group:       &'a wgpu::BindGroup,
-    pub uniform_buf:      &'a wgpu::Buffer,
-    pub output_buf:       &'a wgpu::Buffer,
-    pub spheres_buf:      &'a wgpu::Buffer,
-    pub quads_buf:        &'a wgpu::Buffer,
-    pub output_buf_size:  &'a u64
+    pub device:              &'a wgpu::Device,
+    pub queue:               &'a wgpu::Queue,
+    pub surface:             &'a wgpu::Surface<'static>,
+    pub surface_config:      &'a wgpu::SurfaceConfiguration,
+    pub compute_pipeline:    &'a wgpu::ComputePipeline,
+    pub render_pipeline:     &'a wgpu::RenderPipeline,
+    pub bind_group:          &'a wgpu::BindGroup,
+
+    pub uniform_buf:         &'a wgpu::Buffer,
+    pub output_buf:          &'a wgpu::Buffer,
+    pub spheres_buf:         &'a wgpu::Buffer,
+    pub quads_buf:           &'a wgpu::Buffer,
+    pub ui_element_info:     &'a wgpu::Buffer,
+    pub ui_element_textures: &'a wgpu::Buffer,
+
+    pub output_buf_size:     &'a u64,
+    pub view:                &'a TextureView,
+
 }
 
 #[allow(unused)]
 pub struct GpuStateMut<'a> { // makes my life infinitely easier
-    pub device:           &'a mut wgpu::Device,
-    pub queue:            &'a mut wgpu::Queue,
-    pub surface:          &'a mut wgpu::Surface<'static>,
-    pub surface_config:   &'a mut wgpu::SurfaceConfiguration,
-    pub compute_pipeline: &'a mut wgpu::ComputePipeline,
-    pub render_pipeline:  &'a mut wgpu::RenderPipeline,
-    pub bind_group:       &'a mut wgpu::BindGroup,
-    pub uniform_buf:      &'a mut wgpu::Buffer,
-    pub output_buf:       &'a mut wgpu::Buffer,
-    pub spheres_buf:      &'a mut wgpu::Buffer,
-    pub quads_buf:        &'a mut wgpu::Buffer,
-    pub output_buf_size:  &'a mut u64,
-    pub view:             &'a mut TextureView,
+    pub device:              &'a mut wgpu::Device,
+    pub queue:               &'a mut wgpu::Queue,
+    pub surface:             &'a mut wgpu::Surface<'static>,
+    pub surface_config:      &'a mut wgpu::SurfaceConfiguration,
+    pub compute_pipeline:    &'a mut wgpu::ComputePipeline,
+    pub render_pipeline:     &'a mut wgpu::RenderPipeline,
+    pub bind_group:          &'a mut wgpu::BindGroup,
+    
+    pub uniform_buf:         &'a mut wgpu::Buffer,
+    pub output_buf:          &'a mut wgpu::Buffer,
+    pub spheres_buf:         &'a mut wgpu::Buffer,
+    pub quads_buf:           &'a mut wgpu::Buffer,
+    pub ui_element_info:     &'a mut wgpu::Buffer,
+    pub ui_element_textures: &'a mut wgpu::Buffer,
+    
+    pub output_buf_size:     &'a mut u64,
+    pub view:                &'a mut TextureView,
 }
 
 impl GpuHandler {
@@ -63,19 +79,23 @@ impl GpuHandler {
     fn get_state_mut(&mut self) -> Option<GpuStateMut<'_>> {
         Some(
             GpuStateMut {
-                device:           self.device.as_mut()?,
-                queue:            self.queue.as_mut()?,
-                surface:          self.surface.as_mut()?,
-                surface_config:   self.surface_config.as_mut()?,
-                compute_pipeline: self.compute_pipeline.as_mut()?,
-                render_pipeline:  self.render_pipeline.as_mut()?,
-                bind_group:       self.bind_group.as_mut()?,
-                uniform_buf:      self.uniform_buf.as_mut()?,
-                output_buf:       self.output_buf.as_mut()?,
-                spheres_buf:      self.spheres_buf.as_mut()?,
-                quads_buf:        self.quads_buf.as_mut()?,
-                output_buf_size:  self.output_buf_size.as_mut()?,
-                view:             self.view.as_mut()?,
+                device:              self.device.as_mut()?,
+                queue:               self.queue.as_mut()?,
+                surface:             self.surface.as_mut()?,
+                surface_config:      self.surface_config.as_mut()?,
+                compute_pipeline:    self.compute_pipeline.as_mut()?,
+                render_pipeline:     self.render_pipeline.as_mut()?,
+                bind_group:          self.bind_group.as_mut()?,
+
+                uniform_buf:         self.uniform_buf.as_mut()?,
+                output_buf:          self.output_buf.as_mut()?,
+                spheres_buf:         self.spheres_buf.as_mut()?,
+                quads_buf:           self.quads_buf.as_mut()?,
+                ui_element_info:     self.ui_element_info.as_mut()?,
+                ui_element_textures: self.ui_element_textures.as_mut()?,
+
+                output_buf_size:     self.output_buf_size.as_mut()?,
+                view:                self.view.as_mut()?,
             }
         )
     }
@@ -83,18 +103,23 @@ impl GpuHandler {
     pub fn get_state(&self) -> Option<GpuState<'_>> {
         Some(
             GpuState {
-                device:           self.device.as_ref()?,
-                queue:            self.queue.as_ref()?,
-                surface:          self.surface.as_ref()?,
-                surface_config:   self.surface_config.as_ref()?,
-                compute_pipeline: self.compute_pipeline.as_ref()?,
-                render_pipeline:  self.render_pipeline.as_ref()?,
-                bind_group:       self.bind_group.as_ref()?,
-                uniform_buf:      self.uniform_buf.as_ref()?,
-                output_buf:       self.output_buf.as_ref()?,
-                spheres_buf:      self.spheres_buf.as_ref()?,
-                quads_buf:        self.quads_buf.as_ref()?,
-                output_buf_size:  self.output_buf_size.as_ref()?,
+                device:              self.device.as_ref()?,
+                queue:               self.queue.as_ref()?,
+                surface:             self.surface.as_ref()?,
+                surface_config:      self.surface_config.as_ref()?,
+                compute_pipeline:    self.compute_pipeline.as_ref()?,
+                render_pipeline:     self.render_pipeline.as_ref()?,
+                bind_group:          self.bind_group.as_ref()?,
+
+                uniform_buf:         self.uniform_buf.as_ref()?,
+                output_buf:          self.output_buf.as_ref()?,
+                spheres_buf:         self.spheres_buf.as_ref()?,
+                quads_buf:           self.quads_buf.as_ref()?,
+                ui_element_info:     self.ui_element_info.as_ref()?,
+                ui_element_textures: self.ui_element_textures.as_ref()?,
+
+                output_buf_size:     self.output_buf_size.as_ref()?,
+                view:                self.view.as_ref()?,
             }
         )
     }
@@ -128,6 +153,8 @@ impl GpuHandler {
                     wgpu::BindGroupEntry { binding: 2, resource: gpu.spheres_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 3, resource: gpu.quads_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(gpu.view)},
+                    wgpu::BindGroupEntry { binding: 3, resource: gpu.ui_element_info.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 3, resource: gpu.ui_element_textures.as_entire_binding() },
                 ],
             });
 
@@ -135,7 +162,7 @@ impl GpuHandler {
         }
     }
 
-    pub fn draw_frame(&self, spheres: &Vec<GpuSphere>, quads: &Vec<GpuQuad>, textures: &Vec<UIElement>, uniform: &mut GpuUniform) -> Option<SurfaceTexture> {
+    pub fn draw_frame(&self, spheres: &Vec<GpuSphere>, quads: &Vec<GpuQuad>, ui_elements: &Vec<GPUUIElement>, uniform: &mut GpuUniform) -> Option<SurfaceTexture> {
         let gpu = match self.get_state() {
             Some(t) => t,
             None => return None
@@ -144,11 +171,13 @@ impl GpuHandler {
         // ensure these are correct
         uniform.sphere_count = spheres.len() as u32;
         uniform.quad_count = quads.len() as u32;
+        uniform.texture_count = ui_elements.len() as u32;
 
         // upload to buffer
         gpu.queue.write_buffer(gpu.uniform_buf, 0, bytemuck::bytes_of(uniform));
         gpu.queue.write_buffer(gpu.spheres_buf, 0, bytemuck::cast_slice(spheres));
         gpu.queue.write_buffer(gpu.quads_buf, 0, bytemuck::cast_slice(quads));
+        gpu.queue.write_buffer(gpu.ui_element_info, 0, bytemuck::cast_slice(ui_elements));
 
         // surface that we draw to
         let frame = match gpu.surface.get_current_texture() {
@@ -209,7 +238,7 @@ impl GpuHandler {
     }
 
     // vibecoded but man thats a lot
-    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, texture_paths: Vec<&str>) {
+    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, ui_elements: &mut Vec<UIElement<'_>>, texture_paths: Vec<&str>) {
         // --- get a handle to the graphics card ---
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();
@@ -241,8 +270,6 @@ impl GpuHandler {
         };
 
         surface.configure(&device, &surface_config);
-
-        // --- textures ---
 
         let mut rgba_data: Vec<u8> = vec![];
 
@@ -318,6 +345,33 @@ impl GpuHandler {
             mapped_at_creation: false,
         });
 
+        let ui_element_info = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("ui_element_info"),
+            size: (std::mem::size_of::<ui::ui_element::GPUUIElement>() * 512) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let ui_element_textures = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("ui_element_textures"),
+            size: (16*16*4*128) as u64, // eehh fix later
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        // --- UI Elements ---
+        // really just write textures here. They are (for now) immutable, but ill change this sometime in the future.
+
+        let mut texture_pointer: u32 = 0;
+
+        for element in ui_elements {
+            element.set_pointer(Some(texture_pointer));
+
+            queue.write_buffer(&ui_element_textures, texture_pointer as u64, bytemuck::cast_slice(element.get_image().bytes()));
+            
+            texture_pointer += element.get_image().size() as u32;
+        }
+
         // --- pipelines ---
 
         let source = format!(
@@ -391,28 +445,28 @@ impl GpuHandler {
                     },
                     count: None,
                 },
-                // // ui element info
-                // wgpu::BindGroupLayoutEntry {
-                //     binding: 5,
-                //     visibility: wgpu::ShaderStages::FRAGMENT,
-                //     ty: wgpu::BindingType::Buffer {
-                //         ty: wgpu::BufferBindingType::Storage { read_only: true },
-                //         has_dynamic_offset: false,
-                //         min_binding_size: wgpu::BufferSize::new(512),
-                //     },
-                //     count: None,
-                // },
-                // // ui element textures
-                // wgpu::BindGroupLayoutEntry {
-                //     binding: 6,
-                //     visibility: wgpu::ShaderStages::FRAGMENT,
-                //     ty: wgpu::BindingType::Buffer {
-                //         ty: wgpu::BufferBindingType::Storage { read_only: true },
-                //         has_dynamic_offset: false,
-                //         min_binding_size: wgpu::BufferSize::new(512),
-                //     },
-                //     count: None,
-                // }
+                // ui element info
+                wgpu::BindGroupLayoutEntry {
+                    binding: 5,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(512),
+                    },
+                    count: None,
+                },
+                // ui element textures
+                wgpu::BindGroupLayoutEntry {
+                    binding: 6,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(512),
+                    },
+                    count: None,
+                }
             ],
         });
 
@@ -425,6 +479,9 @@ impl GpuHandler {
                 wgpu::BindGroupEntry { binding: 2, resource: spheres_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 3, resource: quads_buf.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(self.view.as_ref().expect(""))},
+                wgpu::BindGroupEntry { binding: 5, resource: ui_element_info.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 6, resource: ui_element_textures.as_entire_binding() },
+
             ],
         });
 
@@ -480,10 +537,14 @@ impl GpuHandler {
         self.compute_pipeline = Some(compute_pipeline);
         self.render_pipeline = Some(render_pipeline);
         self.bind_group = Some(bind_group);
+
         self.uniform_buf = Some(uniform_buf);
         self.output_buf = Some(output_buf);
         self.spheres_buf = Some(spheres_buf);
         self.quads_buf = Some(quads_buf);
+        self.ui_element_info = Some(ui_element_info);
+        self.ui_element_textures = Some(ui_element_textures);
+
         self.output_buf_size = Some((width as u64)*(height as u64));
     }
 }
@@ -491,20 +552,24 @@ impl GpuHandler {
 impl Default for GpuHandler {
     fn default() -> Self {
         Self {
-            device:           None,
-            queue:            None,
-            surface:          None,
-            surface_config:   None,
-            compute_pipeline: None,
-            render_pipeline:  None,
-            bind_group:       None,
-            uniform_buf:      None,
-            output_buf:       None,
-            spheres_buf:      None,
-            quads_buf:        None,
-            output_buf_size:  None,
-            texture:          None,
-            view:             None
+            device:              None,
+            queue:               None,
+            surface:             None,
+            surface_config:      None,
+            compute_pipeline:    None,
+            render_pipeline:     None,
+            bind_group:          None,
+
+            uniform_buf:         None,
+            output_buf:          None,
+            spheres_buf:         None,
+            quads_buf:           None,
+            output_buf_size:     None,
+            ui_element_info:     None,
+            ui_element_textures: None,
+
+            texture:             None,
+            view:                None
         }
     }
 }

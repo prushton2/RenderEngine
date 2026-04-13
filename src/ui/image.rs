@@ -4,6 +4,7 @@ pub struct Image {
     height: usize,
 }
 
+#[derive(Debug)]
 pub enum ImageError {
     UncaughtException,
     TooManyBytes,
@@ -43,6 +44,10 @@ impl Image {
         Some(&self.bytes[y*self.width*4..(y+1)*self.width*4])
     }
 
+    pub fn size(&self) -> usize {
+        self.width * self.height * 4
+    }
+
     pub fn width(&self) -> usize {
         self.width
     }
@@ -51,7 +56,7 @@ impl Image {
         self.height
     }
 
-    pub fn bytes(&self) -> &Vec<u8> {
+    pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
 }

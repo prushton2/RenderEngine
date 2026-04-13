@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 use clap::Parser;
+use image::ImageReader;
+use render_engine::ui::{self, UIElement};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -52,10 +54,12 @@ impl Arguments {
     }
 }
 
-struct App {
+struct App<'a> {
     // window
-    window: Option<Arc<Window>>,
-    gpu:    wgpu_handler::GpuHandler,
+    window:  Option<Arc<Window>>,
+    gpu:     wgpu_handler::GpuHandler,
+    ui:      Vec<UIElement<'a>>,
+    ui_imgs: Vec<ui::Image>,
 
     // scene
     player:  RwLock<object::Player>,
@@ -75,11 +79,18 @@ struct App {
     statistics_timer: std::time::Instant,
 }
 
-impl App {
+impl App<'_> {
     pub fn new(config: Arguments, player: object::Player, objects: Vec<Box<dyn object::Renderable>>) -> Self {
-        Self {
-            window: None,
-            gpu:    wgpu_handler::GpuHandler::default(),
+        let this: Self = Self {
+            window:  None,
+            gpu:     wgpu_handler::GpuHandler::default(),
+            ui:      vec![],
+            ui_imgs: vec![
+                ui::Image::new(
+                    ImageReader::open("./textures/crosshair.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw(), 
+                    16, 16
+                ).unwrap()
+            ],
 
             player:  RwLock::new(player),
             objects: objects,
@@ -94,7 +105,9 @@ impl App {
             fps_stat:         0,
             deltatime_stat:   0,
             statistics_timer: std::time::Instant::now(),
-        }
+        };
+
+        this
     }
 
     pub fn handle_movement(&mut self) {
@@ -154,7 +167,7 @@ impl App {
     }
 }
 
-impl ApplicationHandler for App {
+impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = Arc::new(
             event_loop.create_window(
@@ -162,6 +175,13 @@ impl ApplicationHandler for App {
                     .with_title("Render Engine")
                     .with_inner_size(winit::dpi::LogicalSize::new(self.config.width as f64, self.config.height as f64))
             ).unwrap()
+        );
+
+        self.ui.push(
+            ui::UIElement::new(
+                &self.ui_imgs[0], 
+                ui::VerticalAnchor::Middle, ui::HorizontalAnchor::Center
+            )
         );
 
         window.set_cursor_grab(CursorGrabMode::Locked)
@@ -174,7 +194,8 @@ impl ApplicationHandler for App {
             self.gpu.init(
                 window.clone(), 
                 self.config.width as u32, 
-                self.config.height as u32, 
+                self.config.height as u32,
+                &mut self.ui,
             vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"])
         );
 
