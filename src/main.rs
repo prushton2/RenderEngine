@@ -150,7 +150,7 @@ impl App {
             .map(|s| s.to_gpu())
             .collect();
         
-        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &mut uniform);
+        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &vec![], &mut uniform);
     }
 }
 

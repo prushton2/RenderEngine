@@ -27,7 +27,7 @@ fn main(
     output[idx] = ray_color(uniforms.pos, ray_dir);
 }
 
-// not sure what these do but docs say i need them
+// fragment shader is the second pass
 @fragment
 fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let idx = u32(pos.y) * uniforms.width + u32(pos.x);
@@ -38,6 +38,7 @@ fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     return vec4(r, g, b, 1.0);
 }
 
+// not sure what this does but docs say i need it
 @vertex
 fn vs_main(@builtin(vertex_index) idx: u32) -> @builtin(position) vec4<f32> {
     var positions = array<vec2<f32>, 3>(

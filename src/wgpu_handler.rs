@@ -5,6 +5,7 @@ use wgpu::{SurfaceTexture, Texture, TextureView};
 use winit::window::{Window};
 
 use crate::object::{self, camera::GpuUniform, quad::GpuQuad, sphere::GpuSphere};
+use crate::ui::UIElement;
 
 pub struct GpuHandler {
     pub device:           Option<wgpu::Device>,
@@ -134,7 +135,7 @@ impl GpuHandler {
         }
     }
 
-    pub fn draw_frame(&self, spheres: &Vec<GpuSphere>, quads: &Vec<GpuQuad>, uniform: &mut GpuUniform) -> Option<SurfaceTexture> {
+    pub fn draw_frame(&self, spheres: &Vec<GpuSphere>, quads: &Vec<GpuQuad>, textures: &Vec<UIElement>, uniform: &mut GpuUniform) -> Option<SurfaceTexture> {
         let gpu = match self.get_state() {
             Some(t) => t,
             None => return None
@@ -164,7 +165,7 @@ impl GpuHandler {
             label: Some("frame")
         });
 
-        // step 1 — compute pass, ray traces into output[]
+        // step 1 - compute pass, ray traces into output[]
         {
             let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                 label: Some("raytrace"),
@@ -179,7 +180,7 @@ impl GpuHandler {
             );
         }
 
-        // step 2 — render pass, copies output[] to screen
+        // step 2 - render pass, copies output[] to screen
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("blit"),
@@ -382,14 +383,36 @@ impl GpuHandler {
                 // textures
                 wgpu::BindGroupLayoutEntry {
                     binding: 4,
-                    visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE, // Usually read in fragment shaders
+                    visibility: wgpu::ShaderStages::COMPUTE,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
                         sample_type: wgpu::TextureSampleType::Float { filterable: false },
                     },
                     count: None,
-                }
+                },
+                // // ui element info
+                // wgpu::BindGroupLayoutEntry {
+                //     binding: 5,
+                //     visibility: wgpu::ShaderStages::FRAGMENT,
+                //     ty: wgpu::BindingType::Buffer {
+                //         ty: wgpu::BufferBindingType::Storage { read_only: true },
+                //         has_dynamic_offset: false,
+                //         min_binding_size: wgpu::BufferSize::new(512),
+                //     },
+                //     count: None,
+                // },
+                // // ui element textures
+                // wgpu::BindGroupLayoutEntry {
+                //     binding: 6,
+                //     visibility: wgpu::ShaderStages::FRAGMENT,
+                //     ty: wgpu::BindingType::Buffer {
+                //         ty: wgpu::BufferBindingType::Storage { read_only: true },
+                //         has_dynamic_offset: false,
+                //         min_binding_size: wgpu::BufferSize::new(512),
+                //     },
+                //     count: None,
+                // }
             ],
         });
 
