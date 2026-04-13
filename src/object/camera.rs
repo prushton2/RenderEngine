@@ -30,7 +30,8 @@ pub struct GpuUniform {
     pub sphere_count:    u32,
     pub pixel_delta_h:  [f32; 3],
     pub quad_count:      u32,
-    pub _pad_end:       [u32; 48], // pad to 256 bytes
+    pub texture_count:   u32,
+    pub _pad_end:       [u32; 47], // pad to 256 bytes
 }
 
 impl Camera {
@@ -125,7 +126,8 @@ impl Camera {
             height: self.window_dimensions.1 as u32,
             sphere_count: 0,
             quad_count: 0,
-            _pad_end: [0u32; 48],
+            texture_count: 0,
+            _pad_end: [0u32; 47],
         }
     }
 

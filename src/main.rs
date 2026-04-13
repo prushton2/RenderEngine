@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 use clap::Parser;
+use image::ImageReader;
+use render_engine::ui::{self, UIElement};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -54,8 +56,9 @@ impl Arguments {
 
 struct App {
     // window
-    window: Option<Arc<Window>>,
-    gpu:    wgpu_handler::GpuHandler,
+    window:  Option<Arc<Window>>,
+    gpu:     wgpu_handler::GpuHandler,
+    ui:      Vec<UIElement>,
 
     // scene
     player:  RwLock<object::Player>,
@@ -77,9 +80,18 @@ struct App {
 
 impl App {
     pub fn new(config: Arguments, player: object::Player, objects: Vec<Box<dyn object::Renderable>>) -> Self {
-        Self {
-            window: None,
-            gpu:    wgpu_handler::GpuHandler::default(),
+        let this: Self = Self {
+            window:  None,
+            gpu:     wgpu_handler::GpuHandler::default(),
+            ui:      vec![
+                ui::UIElement::new(
+                    ui::Image::new(
+                        ImageReader::open("./textures/crosshair.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw(), 
+                        16, 16
+                    ).unwrap(),
+                    ui::VerticalAnchor::Middle, ui::HorizontalAnchor::Center
+                )
+            ],
 
             player:  RwLock::new(player),
             objects: objects,
@@ -94,7 +106,9 @@ impl App {
             fps_stat:         0,
             deltatime_stat:   0,
             statistics_timer: std::time::Instant::now(),
-        }
+        };
+
+        this
     }
 
     pub fn handle_movement(&mut self) {
@@ -149,8 +163,10 @@ impl App {
             .filter_map(|o| o.as_any().downcast_ref::<object::Quad>())
             .map(|s| s.to_gpu())
             .collect();
+
+        let gpu_ui: Vec<ui::ui_element::GPUUIElement> = self.ui.iter().map(|s| s.to_gpu()).collect();
         
-        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &mut uniform);
+        return self.gpu.draw_frame(&gpu_spheres, &gpu_quads, &gpu_ui, &mut uniform);
     }
 }
 
@@ -174,7 +190,8 @@ impl ApplicationHandler for App {
             self.gpu.init(
                 window.clone(), 
                 self.config.width as u32, 
-                self.config.height as u32, 
+                self.config.height as u32,
+                &mut self.ui,
             vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"])
         );
 

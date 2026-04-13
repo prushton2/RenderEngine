@@ -7,6 +7,7 @@ struct Uniform {
     sphere_count:    u32,
     pixel_delta_h:   vec3<f32>,
     quad_count:      u32,
+    texture_count:   u32,
 }
 
 struct Sphere {
@@ -43,11 +44,21 @@ struct Material {
     texture_id: i32,
 }
 
+struct UIElement {
+    v_anchor: u32,
+    h_anchor: u32,
+    width:    u32,
+    height:   u32,
+    pointer:  u32
+}
+
 @group(0) @binding(0) var<uniform>               uniforms:  Uniform;
 @group(0) @binding(1) var<storage, read_write>     output:  array<u32>;
 @group(0) @binding(2) var<storage, read>          spheres:  array<Sphere>;
 @group(0) @binding(3) var<storage, read>            quads:  array<Quad>;
 @group(0) @binding(4) var                        textures:  texture_2d<f32>;
+@group(0) @binding(5) var<storage, read>          ui_info:  array<UIElement>;
+@group(0) @binding(6) var<storage, read>      ui_textures:  array<u32>;
 
 fn ray_at(ray_pos: vec3<f32>, ray_dir: vec3<f32>, t: f32) -> vec3<f32> {
     return ray_pos + t * ray_dir;
