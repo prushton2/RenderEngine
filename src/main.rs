@@ -54,12 +54,11 @@ impl Arguments {
     }
 }
 
-struct App<'a> {
+struct App {
     // window
     window:  Option<Arc<Window>>,
     gpu:     wgpu_handler::GpuHandler,
-    ui:      Vec<UIElement<'a>>,
-    ui_imgs: Vec<ui::Image>,
+    ui:      Vec<UIElement>,
 
     // scene
     player:  RwLock<object::Player>,
@@ -79,17 +78,19 @@ struct App<'a> {
     statistics_timer: std::time::Instant,
 }
 
-impl App<'_> {
+impl App {
     pub fn new(config: Arguments, player: object::Player, objects: Vec<Box<dyn object::Renderable>>) -> Self {
         let this: Self = Self {
             window:  None,
             gpu:     wgpu_handler::GpuHandler::default(),
-            ui:      vec![],
-            ui_imgs: vec![
-                ui::Image::new(
-                    ImageReader::open("./textures/crosshair.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw(), 
-                    16, 16
-                ).unwrap()
+            ui:      vec![
+                ui::UIElement::new(
+                    ui::Image::new(
+                        ImageReader::open("./textures/crosshair.png").expect("No image").decode().expect("Bad decode").to_rgba8().into_raw(), 
+                        16, 16
+                    ).unwrap(),
+                    ui::VerticalAnchor::Middle, ui::HorizontalAnchor::Center
+                )
             ],
 
             player:  RwLock::new(player),
@@ -167,7 +168,7 @@ impl App<'_> {
     }
 }
 
-impl ApplicationHandler for App<'_> {
+impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = Arc::new(
             event_loop.create_window(
@@ -175,13 +176,6 @@ impl ApplicationHandler for App<'_> {
                     .with_title("Render Engine")
                     .with_inner_size(winit::dpi::LogicalSize::new(self.config.width as f64, self.config.height as f64))
             ).unwrap()
-        );
-
-        self.ui.push(
-            ui::UIElement::new(
-                &self.ui_imgs[0], 
-                ui::VerticalAnchor::Middle, ui::HorizontalAnchor::Center
-            )
         );
 
         window.set_cursor_grab(CursorGrabMode::Locked)

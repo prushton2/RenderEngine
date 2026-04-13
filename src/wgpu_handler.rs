@@ -238,7 +238,7 @@ impl GpuHandler {
     }
 
     // vibecoded but man thats a lot
-    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, ui_elements: &mut Vec<UIElement<'_>>, texture_paths: Vec<&str>) {
+    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, ui_elements: &mut Vec<UIElement>, texture_paths: Vec<&str>) {
         // --- get a handle to the graphics card ---
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();

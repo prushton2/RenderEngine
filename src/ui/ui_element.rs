@@ -3,8 +3,8 @@ use crate::ui::Anchor;
 use crate::ui::Image;
 use crate::ui::anchor;
 
-pub struct UIElement<'a> {
-    image: &'a Image,
+pub struct UIElement {
+    image: Image,
     anchor: Anchor,
     gpu_offset: Option<u32>
 }
@@ -19,8 +19,8 @@ pub struct GPUUIElement {
     pub pointer:  u32
 }
 
-impl<'a> UIElement<'a> {
-    pub fn new(image: &'a Image, v_anchor: anchor::VerticalAnchor, h_anchor: anchor::HorizontalAnchor) -> UIElement<'a> {
+impl<'a> UIElement {
+    pub fn new(image: Image, v_anchor: anchor::VerticalAnchor, h_anchor: anchor::HorizontalAnchor) -> UIElement {
         Self {
             image: image,
             anchor: Anchor::new(v_anchor, h_anchor),
@@ -28,8 +28,8 @@ impl<'a> UIElement<'a> {
         }
     }
 
-    pub fn get_image(&'a self) -> &'a Image {
-        self.image
+    pub fn get_image(&self) -> &Image {
+        &self.image
     }
 
     pub fn get_anchor(&'a self) -> &'a Anchor {
@@ -41,7 +41,7 @@ impl<'a> UIElement<'a> {
     }
 }
 
-impl ToGpu<GPUUIElement> for UIElement<'_> {
+impl ToGpu<GPUUIElement> for UIElement {
     fn to_gpu(&self) -> GPUUIElement {
         GPUUIElement { 
             v_anchor: self.anchor.v_anchor.into(),
