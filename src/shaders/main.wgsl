@@ -10,7 +10,6 @@ fn main(
         return;
     }
 
-
     let pixel_center = uniforms.pixel00_loc
         + f32(x) * uniforms.pixel_delta_w
         + f32(y) * uniforms.pixel_delta_h;
@@ -18,11 +17,6 @@ fn main(
     let ray_dir = pixel_center - uniforms.pos;
 
     let idx = y * uniforms.width + x;
-    
-    if uniforms.sphere_count == 0u && uniforms.quad_count == 0u {
-        output[idx] = 0x00FF0000u;
-        return;
-    }
 
     output[idx] = ray_color(uniforms.pos, ray_dir);
 }
