@@ -34,14 +34,20 @@ fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     for (var i = 0u; i < uniforms.texture_count; i++) {
         var ui_element = ui_info[i];
-        // ui_element.h_anchor = 0;
-        // ui_element.v_anchor = 0;
-        // ui_element.width = 1024;
-        // ui_element.height = 1024;
-        // ui_element.pointer = 0;
         
-        let top_left_y = 0u;
-        let top_left_x = 0u;
+        var top_left_y = ui_element.v_anchor * ((uniforms.height-ui_element.height)/2);
+        var top_left_x = ui_element.h_anchor * ((uniforms.width-ui_element.width)/2);
+
+        // shorthand for this kinda thing
+        // switch ui_element.v_anchor {
+        //     case 0:
+        //         break;
+        //     case 1:
+        //         top_left_y = uniforms.height/2 - ui_element.height/2;
+        //         break;
+        //     case 2:
+        //         top_left_y = uniforms.height - ui_element.height;
+        // }
 
         if(
             u32(pos.x) >= top_left_x && 
@@ -54,13 +60,26 @@ fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
             let rel_x = u32(pos.x) - top_left_x;
             let rel_y = u32(pos.y) - top_left_y;
 
-            let c = ui_textures[ui_element.pointer + rel_x + rel_y*ui_element.width];
-            let r = f32((c >> 24u) & 0xFFu) / 255.0;
-            let g = f32((c >> 16u) & 0xFFu) / 255.0;
-            let b = f32((c >> 8u ) & 0xFFu) / 255.0;
-            let a = f32((c       ) & 0xFFu) / 255.0;
+            var c = ui_textures[ui_element.pointer + rel_x + rel_y*ui_element.width];
+            let r = f32((c       ) & 0xFFu) / 255.0; // u8s are written as little endian, so i read it backwards
+            let g = f32((c >> 8u ) & 0xFFu) / 255.0;
+            let b = f32((c >> 16u) & 0xFFu) / 255.0;
+            let a = f32((c >> 24u) & 0xFFu) / 255.0;
 
-            return vec4(r, g, b, a);
+            c = output[idx];
+            let bg = vec4(
+                f32((c >> 16u) & 0xFFu) / 255.0,
+                f32((c >> 8u)  & 0xFFu) / 255.0,
+                f32( c         & 0xFFu) / 255.0,
+                1.0
+            );
+
+            return vec4(
+                r * a + bg.r * (1.0 - a),
+                g * a + bg.g * (1.0 - a),
+                b * a + bg.b * (1.0 - a),
+                1.0
+            );
         }
     }
 

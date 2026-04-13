@@ -152,8 +152,8 @@ impl GpuHandler {
                     wgpu::BindGroupEntry { binding: 2, resource: gpu.spheres_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 3, resource: gpu.quads_buf.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(gpu.view)},
-                    wgpu::BindGroupEntry { binding: 3, resource: gpu.ui_element_info.as_entire_binding() },
-                    wgpu::BindGroupEntry { binding: 3, resource: gpu.ui_element_textures.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 5, resource: gpu.ui_element_info.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 6, resource: gpu.ui_element_textures.as_entire_binding() },
                 ],
             });
 
@@ -514,7 +514,7 @@ impl GpuHandler {
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface_config.format,
-                    blend: None,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: Default::default(),
