@@ -4,6 +4,7 @@ use std::sync::{Arc, RwLock};
 use clap::Parser;
 use image::ImageReader;
 use render_engine::ui::{self, UIElement};
+use render_engine::wgpu_handler::GpuConfig;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent, DeviceEvent, DeviceId};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -187,12 +188,17 @@ impl ApplicationHandler for App {
 
         // wgpu init is async but resumed() isn't — use pollster to block
         pollster::block_on(
-            self.gpu.init(
+        self.gpu.init(
                 window.clone(), 
                 self.config.width as u32, 
                 self.config.height as u32,
-                &mut self.ui,
-            vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"])
+            &mut self.ui,
+            vec!["textures/dirt.png", "textures/grass_side.png", "textures/grass_top.png"],
+                GpuConfig{
+                    sphere_buffer_max: 512,
+                    quad_buffer_max: 512
+                }
+            )
         );
 
         std::thread::sleep(std::time::Duration::from_millis(1000));
