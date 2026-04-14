@@ -8,6 +8,10 @@ use crate::object::{self, camera::GpuUniform, quad::GpuQuad, sphere::GpuSphere};
 use crate::ui::ui_element::GPUUIElement;
 use crate::ui::{self, UIElement};
 
+pub struct GpuConfig {
+    pub sphere_buffer_max: usize,
+    pub quad_buffer_max: usize,
+}
 pub struct GpuHandler {
     pub device:              Option<wgpu::Device>,
     pub queue:               Option<wgpu::Queue>,
@@ -237,7 +241,7 @@ impl GpuHandler {
     }
 
     // vibecoded but man thats a lot
-    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, ui_elements: &mut Vec<UIElement>, texture_paths: Vec<&str>) {
+    pub async fn init(&mut self, window: Arc<Window>, width: u32, height: u32, ui_elements: &mut Vec<UIElement>, texture_paths: Vec<&str>, config: GpuConfig) {
         // --- get a handle to the graphics card ---
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();
@@ -332,14 +336,14 @@ impl GpuHandler {
 
         let spheres_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("spheres"),
-            size: (std::mem::size_of::<object::sphere::GpuSphere>() * 512) as u64,
+            size: (std::mem::size_of::<object::sphere::GpuSphere>() * config.sphere_buffer_max) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         let quads_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("quads"),
-            size: (std::mem::size_of::<object::quad::GpuQuad>() * 512) as u64,
+            size: (std::mem::size_of::<object::quad::GpuQuad>() * config.quad_buffer_max) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
